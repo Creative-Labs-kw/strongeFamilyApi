@@ -123,7 +123,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         }
         // Log the successful login
         logger.info(`User ${email} successfully logged in`);
-        res.json({ token });
+        res.json({ token, userId: user.id });
       }
     );
   } catch (err) {

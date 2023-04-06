@@ -63,9 +63,8 @@ export const getFamilyById = async (req: Request, res: Response) => {
   }
 };
 
-//* Update an existing family
 export const updateFamilyById = async (req: Request, res: Response) => {
-  const { familyName } = req.body;
+  const { familyName, familyMember } = req.body;
 
   try {
     // Find family by id
@@ -77,9 +76,13 @@ export const updateFamilyById = async (req: Request, res: Response) => {
 
     // Update family fields
     family.familyName = familyName;
+    family.familyMember = familyMember;
 
     // Save updated family to database
     await family.save();
+    // Populate the familyMember field and log the updated family object
+    family = await Family.findById(req.params.id).populate("familyMember");
+    console.log(family);
 
     // Return updated family object
     res.json(family);

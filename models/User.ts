@@ -1,9 +1,9 @@
-import { ObjectId } from "mongodb";
 import mongoose, { Schema, model, Document } from "mongoose";
 
 export interface INotification extends Document {
   message: string;
   isRead: boolean;
+  userId: mongoose.Schema.Types.ObjectId;
 }
 
 export interface IUser extends Document {
@@ -14,8 +14,8 @@ export interface IUser extends Document {
   isAdmin?: boolean;
   notifications?: INotification[];
 }
+
 const userSchema = new Schema<IUser>({
-  _id: ObjectId,
   name: {
     type: String,
     required: false,

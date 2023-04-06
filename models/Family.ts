@@ -10,10 +10,12 @@ const familySchema = new Schema<IFamily>({
     type: String,
     required: false,
   },
-  familyMember: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-  },
+  familyMember: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
 });
 
 export default model<IFamily>("Family", familySchema);
