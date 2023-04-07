@@ -15,40 +15,45 @@ export interface IUser extends Document {
   notifications?: INotification[];
 }
 
-const userSchema = new Schema<IUser>({
-  name: {
-    type: String,
-    required: false,
-  },
-  email: {
-    type: String,
-    required: false,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: false,
-  },
-  store: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Store", //!Make it later
-  },
-  isAdmin: {
-    type: Boolean,
-    default: false,
-  },
-  notifications: [
-    {
-      message: {
-        type: String,
-        required: false,
-      },
-      isRead: {
-        type: Boolean,
-        default: false,
-      },
+const userSchema = new Schema<IUser>(
+  {
+    name: {
+      type: String,
+      required: false,
     },
-  ],
-});
+    email: {
+      type: String,
+      required: false,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: false,
+    },
+    store: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store", //!Make it later
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    notifications: [
+      {
+        message: {
+          type: String,
+          required: false,
+        },
+        isRead: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  }
+);
 
 export default model<IUser>("User", userSchema);

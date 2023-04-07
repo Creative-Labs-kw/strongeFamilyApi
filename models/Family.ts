@@ -5,17 +5,20 @@ export interface IFamily extends Document {
   familyMember: mongoose.Schema.Types.ObjectId;
 }
 
-const familySchema = new Schema<IFamily>({
-  familyName: {
-    type: String,
-    required: false,
-  },
-  familyMember: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+const familySchema = new Schema<IFamily>(
+  {
+    familyName: {
+      type: String,
+      required: false,
     },
-  ],
-});
+    familyMember: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
 export default model<IFamily>("Family", familySchema);
