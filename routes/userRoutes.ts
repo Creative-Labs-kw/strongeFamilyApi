@@ -24,4 +24,6 @@ userRouter.put("/:id", userController.updateUserById);
 // Route to delete a user by id
 userRouter.delete("/:id", userController.deleteUserById);
 
+// Delete all users:
+userRouter.delete("/", userController.deleteAllUsers);
 export default userRouter;

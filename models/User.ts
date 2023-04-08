@@ -1,54 +1,35 @@
-import mongoose, { Schema, model, Document } from "mongoose";
+import mongoose from "mongoose";
 
-export interface INotification extends Document {
-  message: string;
-  isRead: boolean;
-  userId: mongoose.Schema.Types.ObjectId;
-}
-
-export interface IUser extends Document {
-  name: string;
-  email: string;
-  password: string;
-  store?: mongoose.Schema.Types.ObjectId;
-  isAdmin?: boolean;
-  notifications?: INotification[];
-}
-
-const userSchema = new Schema<IUser>({
+const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: false,
+    required: true,
   },
   email: {
     type: String,
-    required: false,
+    required: true,
     unique: true,
   },
   password: {
     type: String,
-    required: false,
+    required: true,
   },
-  store: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Store", //!Make it later
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
-  isAdmin: {
-    type: Boolean,
-    default: false,
+  updatedAt: {
+    type: Date,
+    default: Date.now,
   },
-  notifications: [
-    {
-      message: {
-        type: String,
-        required: false,
-      },
-      isRead: {
-        type: Boolean,
-        default: false,
-      },
-    },
-  ],
 });
 
-export default model<IUser>("User", userSchema);
+export interface IUser extends mongoose.Document {
+  name: string;
+  email: string;
+  password: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const User = mongoose.model<IUser>("User", userSchema);

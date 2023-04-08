@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import User, { IUser } from "../models/User";
+import { User, IUser } from "../models/User";
 import config from "../config";
 import logger from "../utils/logger";
 import { Document } from "mongoose";
@@ -74,7 +74,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   // Log the request
-  logger.info(`Login request: ${JSON.stringify(req.body)}`);
+  logger.UserLogger.info(`Login request: ${JSON.stringify(req.body)}`);
 
   // Check for validation errors
   const errors = validationResult(req);
@@ -90,7 +90,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const user = await User.findOne({ email });
     if (!user) {
       // Log the error
-      logger.error(`Invalid credentials: email ${email}`);
+      logger.UserLogger.error(`Invalid credentials: email ${email}`);
       res.status(400).json({ errors: [{ msg: "Invalid credentials" }] });
       return;
     }
@@ -99,7 +99,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       // Log the error
-      logger.error(`Invalid credentials: email ${email}`);
+      logger.UserLogger.error(`Invalid credentials: email ${email}`);
       res.status(400).json({ errors: [{ msg: "Invalid credentials" }] });
       return;
     }
@@ -118,17 +118,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       (err: Error | null, token?: string) => {
         if (err) {
           // Log the error
-          logger.error(`JWT sign error: ${err.message}`);
+          logger.UserLogger.error(`JWT sign error: ${err.message}`);
           throw err;
         }
         // Log the successful login
-        logger.info(`User ${email} successfully logged in`);
+        logger.UserLogger.info(`User ${email} successfully logged in`);
         res.json({ token, userId: user.id });
       }
     );
   } catch (err) {
     // Log the error
-    logger.error(`Server error: ${err.message}`);
+    logger.UserLogger.error(`Server error: ${err.message}`);
     console.error(err.message);
     res.status(500).send("Server error");
   }
@@ -241,6 +241,18 @@ export const deleteUserById = async (req: Request, res: Response) => {
     res.status(500).send("Server error");
   }
 };
+// Delete all users:
+export const deleteAllUsers = async (_req: Request, res: Response) => {
+  try {
+    // Delete all users from database
+    await User.deleteMany({});
+    res.json({ msg: "All users deleted" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
 export function updateUserById(arg0: string, updateUserById: any) {
   throw new Error("Function not implemented.");
 }

@@ -1,12 +1,76 @@
 import { Request, Response } from "express";
+import mongoose, { Document } from "mongoose";
 import Family, { IFamily } from "../models/Family";
-import { Document } from "mongoose";
+import { User } from "../models/User";
+import logger from "../utils/logger";
 
 interface FamilyDocument extends Document<IFamily> {
   remove(): Promise<FamilyDocument>;
 }
+//$ Get Family By Id
+export const updateFamilyById = async (
+  req: Request & { user: { id: string } },
+  res: Response
+) => {
+  try {
+    // Find family by id
+    let family = await Family.findById(req.params.id);
 
-//* Get/Fetch all families
+    logger.FamilyLogger.error(
+      `Family with id ${req.params.id} found: ${JSON.stringify(family)}`
+    );
+
+    if (!family) {
+      logger.FamilyLogger.error(`Family with id ${req.params.id} not found`);
+      res.status(404).json({ errors: [{ msg: "Family not found" }] });
+      return;
+    }
+    //$ Update family name
+    if (req.body.familyName) {
+      family.familyName = req.body.familyName;
+    }
+    //$ Update familyMember:
+    if (req.body.familyMember) {
+      family.familyMember = req.body.familyMember;
+    }
+
+    // Add current user to family
+    const userId = req.user.id;
+    if (
+      userId &&
+      !family.familyMember.includes(new mongoose.Types.ObjectId(userId))
+    ) {
+      family.familyMember.push(new mongoose.Types.ObjectId(userId));
+    }
+
+    // Filter out invalid user IDs and undefined values
+    const validUserIds = family.familyMember
+      .filter((id) => id !== undefined && mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    // Fetch user objects for the given user IDs
+    const users = await User.find({ _id: { $in: validUserIds } });
+
+    // Update family members with the user objects
+    family.familyMember = users.map((user) => user._id);
+
+    // Save updated family to database
+    await family.save();
+    logger.FamilyLogger.info(
+      `Family with id ${req.params.id} successfully updated`
+    );
+
+    // Return updated family object
+    res.json(family);
+  } catch (err) {
+    logger.FamilyLogger.error(
+      `Error updating family with id ${req.params.id}: ${err.message}`
+    );
+    res.status(500).send("Server error");
+  }
+};
+
+//$ Get/Fetch all families
 export const getAllFamilies = async (
   req: Request,
   res: Response
@@ -20,7 +84,7 @@ export const getAllFamilies = async (
   }
 };
 
-//* Create a new family
+//$ Create a new family
 export const createFamily = async (req: Request, res: Response) => {
   const { familyName } = req.body;
 
@@ -49,7 +113,7 @@ export const createFamily = async (req: Request, res: Response) => {
   }
 };
 
-//* Get family by ID
+//$ Get family by ID
 export const getFamilyById = async (req: Request, res: Response) => {
   try {
     const family = await Family.findById(req.params.id);
@@ -63,36 +127,7 @@ export const getFamilyById = async (req: Request, res: Response) => {
   }
 };
 
-export const updateFamilyById = async (req: Request, res: Response) => {
-  const { familyName, familyMember } = req.body;
-
-  try {
-    // Find family by id
-    let family = await Family.findById(req.params.id);
-    if (!family) {
-      res.status(404).json({ errors: [{ msg: "Family not found" }] });
-      return;
-    }
-
-    // Update family fields
-    family.familyName = familyName;
-    family.familyMember = familyMember;
-
-    // Save updated family to database
-    await family.save();
-    // Populate the familyMember field and log the updated family object
-    family = await Family.findById(req.params.id).populate("familyMember");
-    console.log(family);
-
-    // Return updated family object
-    res.json(family);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
-//* Delete a family
+//$ Delete a family
 export const deleteFamilyById = async (req: Request, res: Response) => {
   try {
     // Find family by id
@@ -106,6 +141,20 @@ export const deleteFamilyById = async (req: Request, res: Response) => {
 
     // Return success message
     res.json({ msg: "Family deleted" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+//$ Delete all families
+export const deleteAllFamilies = async (req: Request, res: Response) => {
+  try {
+    // Delete all families from database
+    await Family.deleteMany();
+
+    // Return success message
+    res.json({ msg: "All families deleted" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");

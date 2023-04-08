@@ -1,6 +1,6 @@
 import { createLogger, format, transports } from "winston";
 
-const logger = createLogger({
+const UserLogger = createLogger({
   level: "info",
   format: format.json(),
   transports: [
@@ -9,4 +9,13 @@ const logger = createLogger({
   ],
 });
 
-export default logger;
+const FamilyLogger = createLogger({
+  level: "info",
+  format: format.json(),
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: "logs/Family.log" }),
+  ],
+});
+
+export default { FamilyLogger, UserLogger };
