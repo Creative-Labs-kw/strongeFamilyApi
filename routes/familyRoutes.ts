@@ -5,6 +5,7 @@ import {
   getFamilyById,
   updateFamilyById,
   deleteFamilyById,
+  deleteAllFamilies,
 } from "../controllers/familyController";
 import authMiddleware from "../middleware/authMiddleware";
 
@@ -15,5 +16,6 @@ familyRouter.post("/", createFamily);
 familyRouter.get("/:id", getFamilyById);
 familyRouter.put("/:id", authMiddleware, updateFamilyById);
 familyRouter.delete("/:id", deleteFamilyById);
+familyRouter.delete("/", deleteAllFamilies);
 
 export default familyRouter;

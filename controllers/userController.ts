@@ -241,6 +241,18 @@ export const deleteUserById = async (req: Request, res: Response) => {
     res.status(500).send("Server error");
   }
 };
+// Delete all users:
+export const deleteAllUsers = async (_req: Request, res: Response) => {
+  try {
+    // Delete all users from database
+    await User.deleteMany({});
+    res.json({ msg: "All users deleted" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
 export function updateUserById(arg0: string, updateUserById: any) {
   throw new Error("Function not implemented.");
 }
