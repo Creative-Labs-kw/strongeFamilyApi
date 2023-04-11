@@ -6,6 +6,7 @@ import config from "./config";
 import mongoose from "mongoose";
 import userRouter from "./routes/userRoutes";
 import familyRouter from "./routes/familyRoutes";
+import storeRouter from "./routes/storesRoutes";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(bodyParser.json());
 // Mount the user router at /users
 app.use("/users", userRouter);
 app.use("/families", familyRouter);
+app.use("/stores", storeRouter);
 
 app.listen(config.server.port, () => {
   console.log(`Server running at http://localhost:${config.server.port}`);
