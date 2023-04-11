@@ -25,6 +25,11 @@ const authMiddleware = async (
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as { id: string };
 
+    // Check if decoded object contains the id property
+    if (!decoded.id) {
+      return res.status(401).json({ msg: "Token is not valid" });
+    }
+
     // Add the user to the request object
     req.user = decoded;
 
