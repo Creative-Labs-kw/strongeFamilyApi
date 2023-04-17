@@ -3,34 +3,36 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import config from "./config";
+import passport from "passport";
 import mongoose from "mongoose";
-import userRouter from "./routes/userRoutes";
 import familyRouter from "./routes/familyRoutes";
 import storeRouter from "./routes/storesRoutes";
+import userRouter from "./routes/userRoutes";
 
 dotenv.config();
-
-const url = config.database?.url ?? `http://localhost:${config.server.port}`;
+const isTestEnvironment = process.env.NODE_ENV === "test";
+export const port = isTestEnvironment ? 3001 : 3000;
+const url = config.database?.url ?? `http://localhost:${port}`;
 
 export const app = express();
+//*Auth
+app.use(passport.initialize());
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-// Mount the user router at /users
+//*Routers
 app.use("/users", userRouter);
 app.use("/families", familyRouter);
 app.use("/stores", storeRouter);
 
-app.listen(config.server.port, () => {
-  console.log(`Server running at http://localhost:${config.server.port}`);
-  // ? Connect MongoDB with Mongoose:
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+
   mongoose
     .connect(url)
     .then(() => {
       console.log("Connected to MongoDB!");
-      // perform any actions that need to be done after the connection is established
     })
     .catch((error) => {
       console.error("Error connecting to MongoDB:", error);

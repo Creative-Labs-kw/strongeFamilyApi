@@ -1,14 +1,40 @@
-import mongoose, { Schema, model, Document } from "mongoose";
-import { IUser } from "../models/User";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IStore extends Document {
   storeName: string;
-  owner: mongoose.Types.ObjectId | IUser; // reference to the User schema
+  owner: mongoose.Types.ObjectId;
+  address: string;
+  phoneNumber: string;
+  imageUrl: string;
+  description: string;
 }
 
-const storeSchema = new Schema<IStore>({
-  storeName: { type: String, required: true },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
+const StoreSchema = new Schema<IStore>({
+  storeName: {
+    type: String,
+    required: true,
+  },
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  address: {
+    type: String,
+    required: true,
+  },
+  phoneNumber: {
+    type: String,
+    required: true,
+  },
+  imageUrl: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
 });
 
-export default model<IStore>("Store", storeSchema);
+export default mongoose.model<IStore>("Store", StoreSchema);

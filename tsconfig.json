@@ -1,4 +1,5 @@
 {
+
     "compilerOptions": {
       "lib": ["es6"],
       "target": "es6",
@@ -7,9 +8,12 @@
       "declaration": true,
       "sourceMap": true,
       "outDir": "./dist",
-      "esModuleInterop": true,
       "experimentalDecorators": true,
-      "emitDecoratorMetadata": true
-    }
-  }
+      "emitDecoratorMetadata": true,   
+       "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,  
   
+    },  
+    "include": ["src/**/*", "tests/**/*"]
+
+  }

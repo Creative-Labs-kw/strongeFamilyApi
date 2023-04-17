@@ -1,29 +1,23 @@
-import express from "express";
-import * as userController from "../controllers/userController";
+import { Router } from "express";
+import {
+  deleteAllUsers,
+  deleteUserById,
+  getAllUsers,
+  getUserById,
+  login,
+  register,
+  updateUserById,
+} from "../controllers/userController";
+import { authMiddleware } from "../middleware/passport";
 
-const userRouter = express.Router();
+const userRouter = Router();
 
-// Route to get all users
-userRouter.get("/", userController.getAllUsers);
+userRouter.get("/", getAllUsers);
+userRouter.get("/:id", getUserById);
+userRouter.post("/login", login); //$ SignIn
+userRouter.post("/register", register); //$ SignUp
+userRouter.put("/:id", updateUserById);
+userRouter.delete("/:id", deleteUserById);
+userRouter.delete("/", deleteAllUsers);
 
-// Route to get a single user by id
-userRouter.get("/:id", userController.getUserById);
-
-// Route to create a new user with encryption password
-userRouter.post("/", userController.register);
-
-// Route to createUser without encryption password
-userRouter.post("/", userController.createUser);
-
-// Login
-userRouter.post("/login", userController.login);
-
-// Route to update an existing user by id
-userRouter.put("/:id", userController.updateUserById);
-
-// Route to delete a user by id
-userRouter.delete("/:id", userController.deleteUserById);
-
-// Delete all users:
-userRouter.delete("/", userController.deleteAllUsers);
 export default userRouter;

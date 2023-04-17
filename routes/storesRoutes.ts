@@ -7,14 +7,14 @@ import {
   deleteStoreById,
   deleteAllStores,
 } from "../controllers/storeController";
-import authMiddleware from "../middleware/authMiddleware";
+import { authMiddleware } from "../middleware/passport";
 
 const storeRouter = Router();
 
 storeRouter.get("/", getAllStores);
-storeRouter.post("/", createStore);
+storeRouter.post("/:id", authMiddleware, createStore);
 storeRouter.get("/:id", getStoreById);
-storeRouter.put("/:id", updateStoreById);
+storeRouter.put("/:id", authMiddleware, updateStoreById);
 storeRouter.delete("/:id", deleteStoreById);
 storeRouter.delete("/", deleteAllStores);
 
