@@ -7,7 +7,8 @@ import {
   deleteFamilyById,
   deleteAllFamilies,
 } from "../controllers/familyController";
-import authMiddleware from "../middleware/authMiddleware";
+import { authMiddleware } from "../middleware/passport";
+authMiddleware;
 
 const familyRouter = Router();
 
