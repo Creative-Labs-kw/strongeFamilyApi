@@ -7,7 +7,6 @@ import {
   deleteStoreById,
   deleteAllStores,
 } from "../controllers/storeController";
-import authMiddleware from "../middleware/authMiddleware";
 
 const storeRouter = Router();
 

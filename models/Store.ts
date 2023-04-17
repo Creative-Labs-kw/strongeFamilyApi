@@ -7,7 +7,7 @@ export interface IStore extends Document {
 }
 
 const storeSchema = new Schema<IStore>({
-  storeName: { type: String, required: true },
+  storeName: { type: String, required: false },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
 });
 

@@ -1,16 +1,20 @@
-import mongoose from "mongoose";
 import logger from "../utils/logger";
-import { User } from "../models/User";
 import { Document } from "mongoose";
 import Store, { IStore } from "../models/Store";
 import { Request, Response } from "express";
+import { IUser } from "../models/User";
+interface UserDocument extends Document, IUser {}
+
+interface UserRequest extends Request {
+  user?: UserDocument;
+}
 
 interface StoreDocument extends Document<IStore> {
   remove(): Promise<StoreDocument>;
 }
 
 //$ Get updateStoreById
-export const updateStoreById = async (req: Request, res: Response) => {
+export const updateStoreById = async (req: UserRequest, res: Response) => {
   try {
     // Find store by id and populate the owner field
     let store = await Store.findById(req.params.id).populate("owner");
@@ -26,7 +30,7 @@ export const updateStoreById = async (req: Request, res: Response) => {
     }
 
     // Check if the current user owns the store
-    if (store.owner && store.owner.toString() !== req.user.id) {
+    if (store.owner && store.owner.toString() !== req.user?.id) {
       logger.StoreLogger.error(`User not authorized to update store`);
       res.status(401).json({ errors: [{ msg: "User not authorized" }] });
       return;
@@ -63,7 +67,7 @@ export const getAllStores = async (
 };
 
 //$ Create a new store
-export const createStore = async (req: Request, res: Response) => {
+export const createStore = async (req: UserRequest, res: Response) => {
   const { storeName } = req.body;
 
   try {
