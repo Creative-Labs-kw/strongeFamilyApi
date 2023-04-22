@@ -18,17 +18,14 @@ export const updateStoreById = async (req: UserRequest, res: Response) => {
   try {
     // Find store by id and populate the owner field
     let store = await Store.findById(req.params.id).populate("owner");
-    console.log("Found store:", store);
 
     if (!store) {
-      console.log(`Store with id ${req.params.id} not found`);
       res.status(404).json({ errors: [{ msg: "Store not found" }] });
       return;
     }
 
     // Check if the current user owns the store
     if (store.owner && store.owner._id.toString() !== req.user?.id) {
-      console.log(`User not authorized to update store`);
       res.status(401).json({ errors: [{ msg: "User not authorized" }] });
       return;
     }
@@ -99,7 +96,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
     // Create new store
     store = new Store({
       storeName,
-      owner: req.user?.id, // set the owner field to the current user's ID
+      owner: req.body.owner || req.user?.id, // set the owner field to the current user's ID if not provided in the
       address,
       phoneNumber,
       imageUrl,
@@ -127,7 +124,6 @@ export const createStore = async (req: UserRequest, res: Response) => {
 export const getStoreById = async (req: Request, res: Response) => {
   try {
     const store = await Store.findById(req.params.id).populate("owner");
-    console.log(store);
 
     if (!store) {
       return res.status(404).json({ msg: "store not found" });
