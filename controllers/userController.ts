@@ -9,7 +9,7 @@ import logger from "../utils/logger";
 import { User, IUser } from "../models/User";
 import { Document } from "mongoose";
 import { JwtPayload } from "jsonwebtoken";
-
+import Store from "../models/Store";
 interface IUserPayload {
   user?: {
     id: string;
@@ -20,15 +20,121 @@ export interface IRequest extends Request {
 }
 interface UserDocument extends Document<IUser> {
   remove(): Promise<UserDocument>;
+  stores: string[]; // add stores property here
 }
+
+//* Update an existing user
+export const updateUserById = async (
+  req: IRequest,
+  res: Response
+): Promise<void> => {
+  const { name, email } = req.body;
+
+  try {
+    // Find user by id
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      res.status(404).json({ errors: [{ msg: "User not found" }] });
+      return;
+    }
+
+    // Check if authenticated user is updating their own profile
+    const payload: JwtPayload = req.user as JwtPayload;
+    if (user._id.toString() !== payload.sub) {
+      res.status(401).json({ errors: [{ msg: "Unauthorized" }] });
+      return;
+    }
+
+    // Update user fields
+    user.name = name;
+    user.email = email;
+
+    // Save updated user to database
+    await user.save();
+
+    // Return updated user object
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+  }
+};
+
+//* Get Store By Owner:
+export const getStoresByOwnerId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  try {
+    const stores = await Store.find({ owner: id });
+    res.json(stores);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+  }
+};
+
+// * Get User Stores by id:
+export const getUserStoreById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+  try {
+    const stores = await Store.find({ owner: id });
+    res.status(200).json(stores);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+  }
+};
+
+//* Update an user Stores
+export const updateUserStoresById = async (
+  req: IRequest,
+  res: Response
+): Promise<void> => {
+  const { storeId } = req.params;
+  console.log("storeId", storeId);
+
+  try {
+    // Find user by id
+    const user = await User.findById(req.params.id);
+    console.log("user", user);
+
+    if (!user) {
+      res.status(404).json({ errors: [{ msg: "User not found" }] });
+      return;
+    }
+
+    // Make sure stores field is an array
+    if (!Array.isArray(user.stores)) {
+      user.stores = [];
+    }
+
+    // Update stores array with new store ID
+    user.stores.push(storeId);
+
+    // Save updated user to database
+    await user.save();
+
+    // Return updated user object
+    res.json(user);
+
+    console.log("user after save", user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+    return;
+  }
+};
+
 //* Handle user registration
 export const register = async (req: Request, res: Response): Promise<void> => {
-  console.log("Registering user...");
-
   // Check for validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.log("Validation errors:", errors.array());
     res.status(422).json({ errors: errors.array() });
     return;
   }
@@ -39,7 +145,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Check if user already exists
     let user: IUser | null = await User.findOne({ email });
     if (user) {
-      console.log(`User with email ${email} already exists`);
       res.status(400).json({ errors: [{ msg: "User already exists" }] });
       return;
     }
@@ -57,7 +162,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     // Save user to database
     await user.save();
-    console.log("User saved to database:", user);
 
     // Create JWT token
     const payload: IUserPayload = {
@@ -70,7 +174,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       expiresIn: config.jwt.expiration,
     });
 
-    console.log(`User ${email} successfully registered`);
     res.status(201).json({ token });
   } catch (err) {
     res.status(500).send("Server error");
@@ -161,42 +264,6 @@ export const getUserById = async (req: Request, res: Response) => {
     res.json(user);
   } catch (err) {
     res.status(500).send("Server error");
-  }
-};
-
-//* Update an existing user
-export const updateUserById = async (
-  req: IRequest,
-  res: Response
-): Promise<void> => {
-  const { name, email } = req.body;
-
-  try {
-    // Find user by id
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      res.status(404).json({ errors: [{ msg: "User not found" }] });
-      return;
-    }
-
-    // Check if authenticated user is updating their own profile
-    const payload: JwtPayload = req.user as JwtPayload;
-    if (user._id.toString() !== payload.sub) {
-      res.status(401).json({ errors: [{ msg: "Unauthorized" }] });
-      return;
-    }
-
-    // Update user fields
-    user.name = name;
-    user.email = email;
-
-    // Save updated user to database
-    await user.save();
-
-    // Return updated user object
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
 

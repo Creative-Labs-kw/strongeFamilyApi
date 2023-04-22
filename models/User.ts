@@ -1,8 +1,15 @@
 import { Document } from "mongodb";
 import mongoose, { Model } from "mongoose";
-export interface UserDocument extends IUser, Document {}
+export interface IUser extends mongoose.Document {
+  name: string;
+  email: string;
+  password: string;
+  createdAt: Date;
+  updatedAt: Date;
+  stores: string[]; // add stores property here
+}
 
-export interface UserModel extends Model<UserDocument> {}
+export interface UserModel extends Model<IUser> {}
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
