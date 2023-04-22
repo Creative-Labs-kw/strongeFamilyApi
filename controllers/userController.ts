@@ -74,6 +74,22 @@ export const getStoresByOwnerId = async (
     res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
+
+// * Get User Stores by id:
+export const getUserStoreById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+  try {
+    const stores = await Store.find({ owner: id });
+    res.status(200).json(stores);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+  }
+};
+
 //* Update an user Stores
 export const updateUserStoresById = async (
   req: IRequest,
