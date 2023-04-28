@@ -6,7 +6,7 @@ export interface IFamily extends Document {
 }
 
 const familySchema = new Schema<IFamily>({
-  familyName: { type: String, required: false },
+  familyName: { type: String, required: false, default: "", trim: true },
   familyMember: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });
 

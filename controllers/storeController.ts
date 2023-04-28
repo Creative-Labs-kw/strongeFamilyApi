@@ -1,4 +1,3 @@
-import logger from "../utils/logger";
 import { Document } from "mongoose";
 import Store, { IStore } from "../models/Store";
 import { Request, Response } from "express";
@@ -17,7 +16,7 @@ interface StoreDocument extends Document<IStore> {
 export const updateStoreById = async (req: UserRequest, res: Response) => {
   try {
     // Find store by id and populate the owner field
-    let store = await Store.findById(req.params.id).populate("owner");
+    let store = await Store.findById(req.params.id).populate("owner items");
 
     if (!store) {
       res.status(404).json({ errors: [{ msg: "Store not found" }] });
@@ -31,28 +30,26 @@ export const updateStoreById = async (req: UserRequest, res: Response) => {
     }
 
     // Update store properties
-    if (
-      req.body.storeName ||
-      req.body.address ||
-      req.body.phoneNumber ||
-      req.body.imageUrl ||
-      req.body.description
-    ) {
-      if (req.body.storeName) {
-        store.storeName = req.body.storeName;
-      }
-      if (req.body.address) {
-        store.address = req.body.address;
-      }
-      if (req.body.phoneNumber) {
-        store.phoneNumber = req.body.phoneNumber;
-      }
-      if (req.body.imageUrl) {
-        store.imageUrl = req.body.imageUrl;
-      }
-      if (req.body.description) {
-        store.description = req.body.description;
-      }
+    if (req.body) {
+      Object.keys(req.body).forEach((key) => {
+        if (key === "items") {
+          const newItems = req.body.items;
+          if (Array.isArray(newItems)) {
+            store.items = newItems;
+          } else {
+            res.status(400).json({
+              errors: [
+                {
+                  msg: "Invalid items format. Must be an array of objects",
+                },
+              ],
+            });
+            return;
+          }
+        } else {
+          store[key] = req.body[key];
+        }
+      });
     }
 
     // Save updated store to database
@@ -72,7 +69,8 @@ export const getAllStores = async (
   res: Response
 ): Promise<void> => {
   try {
-    const stores = await Store.find().populate("owner");
+    const stores = await Store.find().populate("owner items");
+
     res.json(stores);
   } catch (err) {
     console.error(err.message);
@@ -82,7 +80,15 @@ export const getAllStores = async (
 
 //$ Create a new store
 export const createStore = async (req: UserRequest, res: Response) => {
-  const { storeName, address, phoneNumber, imageUrl, description } = req.body;
+  const {
+    storeName,
+    address,
+    phoneNumber,
+    imageUrl,
+    description,
+    items,
+    links,
+  } = req.body;
 
   try {
     // Check if store already exists
@@ -101,6 +107,8 @@ export const createStore = async (req: UserRequest, res: Response) => {
       phoneNumber,
       imageUrl,
       description,
+      items,
+      links,
     });
 
     // Save store to database
@@ -123,7 +131,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
 //$ Get store by ID
 export const getStoreById = async (req: Request, res: Response) => {
   try {
-    const store = await Store.findById(req.params.id).populate("owner");
+    const store = await Store.findById(req.params.id).populate("owner items");
 
     if (!store) {
       return res.status(404).json({ msg: "store not found" });

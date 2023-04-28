@@ -14,15 +14,21 @@ const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: false,
+    default: "",
+    trim: true,
   },
   email: {
     type: String,
     required: false,
     unique: false,
+    default: "",
+    trim: true,
   },
   password: {
     type: String,
     required: false,
+    default: "",
+    trim: true,
   },
   createdAt: {
     type: Date,
