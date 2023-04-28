@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import familyRouter from "./routes/familyRoutes";
 import storeRouter from "./routes/storesRoutes";
 import userRouter from "./routes/userRoutes";
+import itemsRouter from "./routes/itemsRoutes";
 
 dotenv.config();
 const isTestEnvironment = process.env.NODE_ENV === "test";
@@ -25,6 +26,7 @@ app.use(bodyParser.json());
 app.use("/users", userRouter);
 app.use("/families", familyRouter);
 app.use("/stores", storeRouter);
+app.use("/items", itemsRouter);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
