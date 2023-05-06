@@ -16,8 +16,9 @@ interface StoreDocument extends Document<IStore> {
 export const updateStoreById = async (req: UserRequest, res: Response) => {
   try {
     // Find store by id and populate the owner field
-    let store = await Store.findById(req.params.id).populate("owner items");
-
+    let store = await Store.findById(req.params.id)
+      .populate("owner")
+      .populate("items");
     if (!store) {
       res.status(404).json({ errors: [{ msg: "Store not found" }] });
       return;
@@ -69,8 +70,7 @@ export const getAllStores = async (
   res: Response
 ): Promise<void> => {
   try {
-    const stores = await Store.find().populate("owner items");
-
+    const stores = await Store.find().populate("owner").populate("items");
     res.json(stores);
   } catch (err) {
     console.error(err.message);
@@ -99,10 +99,17 @@ export const createStore = async (req: UserRequest, res: Response) => {
         .json({ errors: [{ msg: "Store already exists" }] });
     }
 
+    // Check if user is authenticated
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ errors: [{ msg: "User not authenticated" }] });
+    }
+
     // Create new store
     store = new Store({
       storeName,
-      owner: req.body.owner || req.user?.id, // set the owner field to the current user's ID if not provided in the
+      owner: req.body.owner || req.user.id, // set the owner field to the current user's ID if not provided in the
       address,
       phoneNumber,
       imageUrl,
@@ -116,7 +123,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
 
     // Add store ID to user's stores array
     await User.findByIdAndUpdate(
-      req.user?.id,
+      req.user.id,
       { $push: { stores: store._id } },
       { new: true }
     );
@@ -131,8 +138,9 @@ export const createStore = async (req: UserRequest, res: Response) => {
 //$ Get store by ID
 export const getStoreById = async (req: Request, res: Response) => {
   try {
-    const store = await Store.findById(req.params.id).populate("owner items");
-
+    const store = await Store.findById(req.params.id)
+      .populate("owner")
+      .populate("items");
     if (!store) {
       return res.status(404).json({ msg: "store not found" });
     }

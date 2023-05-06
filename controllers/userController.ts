@@ -245,7 +245,7 @@ export const getAllUsers = async (
   res: Response
 ): Promise<void> => {
   try {
-    const users = await User.find();
+    const users = await User.find().populate("stores");
     res.json(users);
   } catch (err) {
     res.status(500).send("Server error");
