@@ -13,10 +13,10 @@ import { getStoresByOwnerId } from "../controllers/userController";
 const storeRouter = Router();
 
 storeRouter.get("/", getAllStores);
-storeRouter.post("/:storeId", authMiddleware, createStore);
+storeRouter.post("/:userId", authMiddleware, createStore);
 storeRouter.get("/:storeId", getStoreById);
 storeRouter.get("/owner/:storeId", getStoresByOwnerId);
-storeRouter.put("/:id", authMiddleware, updateStoreById);
+storeRouter.put("/:id", updateStoreById);
 storeRouter.delete("/:storeId", deleteStoreById);
 storeRouter.delete("/", deleteAllStores);
 

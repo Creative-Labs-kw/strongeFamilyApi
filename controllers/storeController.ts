@@ -80,15 +80,7 @@ export const getAllStores = async (
 
 //$ Create a new store
 export const createStore = async (req: UserRequest, res: Response) => {
-  const {
-    storeName,
-    address,
-    phoneNumber,
-    imageUrl,
-    description,
-    items,
-    links,
-  } = req.body;
+  const { storeName, address, phoneNumber, description } = req.body;
 
   try {
     // Check if store already exists
@@ -112,10 +104,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
       owner: req.body.owner || req.user.id, // set the owner field to the current user's ID if not provided in the
       address,
       phoneNumber,
-      imageUrl,
       description,
-      items,
-      links,
     });
 
     // Save store to database
@@ -131,6 +120,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
     res.status(201).json(store);
   } catch (err) {
     console.error(err.message);
+    console.log("Error creating store:", err);
     res.status(500).send("Server error");
   }
 };

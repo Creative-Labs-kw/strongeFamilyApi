@@ -20,7 +20,11 @@ userRouter.get("/:userId/stores", getUserStoreById);
 userRouter.post("/login", login); //$ SignIn
 userRouter.post("/register", register); //$ SignUp
 userRouter.put("/:userId", updateUserById);
-userRouter.put("/:userId/stores/:storeId", updateUserStoresById);
+userRouter.put(
+  "/:userId/stores/:storeId",
+  authMiddleware,
+  updateUserStoresById
+);
 userRouter.delete("/:userId", deleteUserById);
 userRouter.delete("/", deleteAllUsers);
 
