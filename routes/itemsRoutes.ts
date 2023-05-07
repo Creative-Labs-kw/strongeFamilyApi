@@ -13,7 +13,7 @@ const itemsRouter = Router();
 
 itemsRouter.get("/:storeId", getAllItems);
 itemsRouter.get("/:storeId/:itemId", getItemById);
-itemsRouter.post("/:storeId", authMiddleware, createItem);
+itemsRouter.post("/:storeId", createItem);
 itemsRouter.put("/:storeId/:itemId", updateItemById);
 itemsRouter.delete("/:storeId/:itemId", deleteItemById);
 itemsRouter.delete("/:storeId/", deleteAllItems);

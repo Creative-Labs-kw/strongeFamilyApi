@@ -11,13 +11,13 @@ export interface IItem {
 const ItemSchema = new Schema<IItem>({
   itemName: {
     type: String,
-    required: true,
+    required: false,
     default: "",
     trim: true,
   },
   price: {
     type: Number,
-    required: true,
+    required: false,
     default: 0,
     trim: true,
   },
@@ -27,7 +27,7 @@ const ItemSchema = new Schema<IItem>({
   },
   description: {
     type: String,
-    required: true,
+    required: false,
     default: "",
     trim: true,
   },

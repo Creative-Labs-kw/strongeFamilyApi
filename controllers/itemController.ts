@@ -49,7 +49,7 @@ export const createItem = async (req: Request, res: Response) => {
     await newItem.save();
 
     const store = await Store.findById(req.params.storeId);
-    store.items.push(newItem.id); // push the _id value of the newly created Item to the items array of the Store
+    store.items.push(newItem.id);
     await store.save();
 
     res.json(newItem);
