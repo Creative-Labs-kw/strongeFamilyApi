@@ -75,14 +75,13 @@ export const getStoresByOwnerId = async (
   }
 };
 
-// * Get User Stores by id:
-export const getUserStoreById = async (
+export const getUserStores = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { id } = req.params;
+  const { userId } = req.params;
   try {
-    const stores = await Store.find({ owner: id });
+    const stores = await Store.find({ owner: userId });
     res.status(200).json(stores);
   } catch (error) {
     console.log(error);

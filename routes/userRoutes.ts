@@ -4,7 +4,7 @@ import {
   deleteUserById,
   getAllUsers,
   getUserById,
-  getUserStoreById,
+  getUserStores,
   login,
   register,
   updateUserById,
@@ -16,7 +16,7 @@ const userRouter = Router();
 
 userRouter.get("/", getAllUsers);
 userRouter.get("/:userId", getUserById);
-userRouter.get("/:userId/stores", getUserStoreById);
+userRouter.get("/:userId/stores", getUserStores);
 userRouter.post("/login", login); //$ SignIn
 userRouter.post("/register", register); //$ SignUp
 userRouter.put("/:userId", updateUserById);
