@@ -59,12 +59,8 @@ export const updateFamilyById = async (
       family.familyMember.push(new mongoose.Types.ObjectId(userId));
     }
 
-    if (!req.user) {
-      logger.FamilyLogger.error(`User object is undefined`);
-      res.status(401).json({ errors: [{ msg: "User is not authorized" }] });
-      return;
-    }
-    console.log(`Updating family with user id: ${userId}`);
+    // Update the numberOfMembers field based on the updated family members
+    family.numberOfMembers = family.familyMember.length;
 
     // Save updated family to database
     await family.save();
