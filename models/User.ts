@@ -1,4 +1,3 @@
-import { Document } from "mongodb";
 import mongoose, { Model } from "mongoose";
 export interface IUser extends mongoose.Document {
   name: string;
@@ -44,6 +43,8 @@ const userSchema = new mongoose.Schema({
       ref: "Store",
     },
   ],
+  families: [{ type: mongoose.Schema.Types.ObjectId, ref: "Family" }],
+  isAdmin: { type: Boolean, require: false },
 });
 
 export interface IUser extends mongoose.Document {

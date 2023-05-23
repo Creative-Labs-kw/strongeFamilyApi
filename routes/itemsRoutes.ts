@@ -7,7 +7,6 @@ import {
   getItemById,
   updateItemById,
 } from "../controllers/itemController";
-// import { authMiddleware } from "../middleware/passport";
 
 const itemsRouter = Router();
 

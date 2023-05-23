@@ -6,7 +6,10 @@ import mongoose from "mongoose";
 // GET all items for a specific store
 export const getAllItems = async (req: Request, res: Response) => {
   try {
-    const items = await Item.find({ store: req.params.storeId });
+    const items = await Item.find({ store: req.params.storeId }).populate(
+      "store"
+    );
+
     res.json(items);
   } catch (err) {
     console.error(err.message);
@@ -19,8 +22,9 @@ export const getItemById = async (req: Request, res: Response) => {
   try {
     const item = await Item.findOne({
       _id: req.params.itemId,
-      store: req.params.storeId,
-    });
+      itemId: req.params.itemId,
+    }).populate("store");
+
     if (!item) {
       return res.status(404).json({ msg: "Item not found" });
     }
@@ -45,7 +49,7 @@ export const createItem = async (req: Request, res: Response) => {
     await newItem.save();
 
     const store = await Store.findById(req.params.storeId);
-    store.items.push(newItem.id); // push the _id value of the newly created Item to the items array of the Store
+    store.items.push(newItem.id);
     await store.save();
 
     res.json(newItem);

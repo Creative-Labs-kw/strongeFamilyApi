@@ -2,6 +2,7 @@ import { Document } from "mongoose";
 import Store, { IStore } from "../models/Store";
 import { Request, Response } from "express";
 import { IUser, User } from "../models/User";
+import Family from "../models/Family";
 interface UserDocument extends Document, IUser {}
 
 interface UserRequest extends Request {
@@ -16,8 +17,9 @@ interface StoreDocument extends Document<IStore> {
 export const updateStoreById = async (req: UserRequest, res: Response) => {
   try {
     // Find store by id and populate the owner field
-    let store = await Store.findById(req.params.id).populate("owner items");
-
+    let store = await Store.findById(req.params.id)
+      .populate("owner")
+      .populate("items");
     if (!store) {
       res.status(404).json({ errors: [{ msg: "Store not found" }] });
       return;
@@ -69,7 +71,32 @@ export const getAllStores = async (
   res: Response
 ): Promise<void> => {
   try {
-    const stores = await Store.find().populate("owner items");
+    const stores = await Store.find().populate("owner").populate("items");
+    res.json(stores);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+//$ Get/Fetch all Family Store //fix
+export const getFamilyStores = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { familyId } = req.params;
+
+    // Assuming you have a "familyId" field in the Family schema
+    const family = await Family.findById(familyId);
+
+    // Get the user IDs in the family
+    const userIds = family.familyMember.map((member) => member._id);
+
+    // Assuming you have a "userId" field in the User schema
+    const stores = await Store.find({ "owner.userId": { $in: userIds } })
+      .populate("owner")
+      .populate("items");
 
     res.json(stores);
   } catch (err) {
@@ -80,15 +107,7 @@ export const getAllStores = async (
 
 //$ Create a new store
 export const createStore = async (req: UserRequest, res: Response) => {
-  const {
-    storeName,
-    address,
-    phoneNumber,
-    imageUrl,
-    description,
-    items,
-    links,
-  } = req.body;
+  const { storeName, address, phoneNumber, description } = req.body;
 
   try {
     // Check if store already exists
@@ -99,16 +118,20 @@ export const createStore = async (req: UserRequest, res: Response) => {
         .json({ errors: [{ msg: "Store already exists" }] });
     }
 
+    // Check if user is authenticated
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ errors: [{ msg: "User not authenticated" }] });
+    }
+
     // Create new store
     store = new Store({
       storeName,
-      owner: req.body.owner || req.user?.id, // set the owner field to the current user's ID if not provided in the
+      owner: req.body.owner || req.user.id, // set the owner field to the current user's ID if not provided in the
       address,
       phoneNumber,
-      imageUrl,
       description,
-      items,
-      links,
     });
 
     // Save store to database
@@ -116,7 +139,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
 
     // Add store ID to user's stores array
     await User.findByIdAndUpdate(
-      req.user?.id,
+      req.user.id,
       { $push: { stores: store._id } },
       { new: true }
     );
@@ -124,6 +147,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
     res.status(201).json(store);
   } catch (err) {
     console.error(err.message);
+    console.log("Error creating store:", err);
     res.status(500).send("Server error");
   }
 };
@@ -131,8 +155,9 @@ export const createStore = async (req: UserRequest, res: Response) => {
 //$ Get store by ID
 export const getStoreById = async (req: Request, res: Response) => {
   try {
-    const store = await Store.findById(req.params.id).populate("owner items");
-
+    const store = await Store.findById(req.params.id)
+      .populate("owner")
+      .populate("items");
     if (!store) {
       return res.status(404).json({ msg: "store not found" });
     }
