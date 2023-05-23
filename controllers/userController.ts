@@ -10,6 +10,7 @@ import { User, IUser } from "../models/User";
 import { Document } from "mongoose";
 import { JwtPayload } from "jsonwebtoken";
 import Store from "../models/Store";
+import Family from "../models/Family";
 interface IUserPayload {
   user?: {
     id: string;
@@ -22,6 +23,99 @@ interface UserDocument extends Document<IUser> {
   remove(): Promise<UserDocument>;
   stores: string[]; // add stores property here
 }
+
+//* Get all users
+export const getAllUsers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const users = await User.find().populate("stores");
+    res.json(users);
+  } catch (err) {
+    res.status(500).send("Server error");
+  }
+};
+
+//* Get Store By Owner:
+export const getStoresByOwnerId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  try {
+    const stores = await Store.find({ owner: id });
+    res.json(stores);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+  }
+};
+//* Get user stores:
+export const getUserStores = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { userId } = req.params;
+  try {
+    const stores = await Store.find({ owner: userId });
+    res.status(200).json(stores);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+  }
+};
+
+//* Get user families:
+export const getAllUserFamilies = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { userId } = req.params;
+  try {
+    const Families = await Family.find({ familyMember: userId });
+    res.json(Families);
+  } catch (err) {
+    res.status(500).send("Server error");
+  }
+};
+
+//* Update an user Stores
+export const updateUserStoresById = async (
+  req: IRequest,
+  res: Response
+): Promise<void> => {
+  const { storeId } = req.params;
+
+  try {
+    // Find user by id
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      res.status(404).json({ errors: [{ msg: "User not found" }] });
+      return;
+    }
+
+    // Make sure stores field is an array
+    if (!Array.isArray(user.stores)) {
+      user.stores = [];
+    }
+
+    // Update stores array with new store ID
+    user.stores.push(storeId);
+
+    // Save updated user to database
+    await user.save();
+
+    // Return updated user object
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+    return;
+  }
+};
 
 //* Update an existing user
 export const updateUserById = async (
@@ -56,76 +150,6 @@ export const updateUserById = async (
     res.json(user);
   } catch (err) {
     res.status(500).json({ errors: [{ msg: "Server error" }] });
-  }
-};
-
-//* Get Store By Owner:
-export const getStoresByOwnerId = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const { id } = req.params;
-
-  try {
-    const stores = await Store.find({ owner: id });
-    res.json(stores);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ errors: [{ msg: "Server error" }] });
-  }
-};
-
-export const getUserStores = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const { userId } = req.params;
-  try {
-    const stores = await Store.find({ owner: userId });
-    res.status(200).json(stores);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ errors: [{ msg: "Server error" }] });
-  }
-};
-
-//* Update an user Stores
-export const updateUserStoresById = async (
-  req: IRequest,
-  res: Response
-): Promise<void> => {
-  const { storeId } = req.params;
-  console.log("storeId", storeId);
-
-  try {
-    // Find user by id
-    const user = await User.findById(req.params.id);
-    console.log("user", user);
-
-    if (!user) {
-      res.status(404).json({ errors: [{ msg: "User not found" }] });
-      return;
-    }
-
-    // Make sure stores field is an array
-    if (!Array.isArray(user.stores)) {
-      user.stores = [];
-    }
-
-    // Update stores array with new store ID
-    user.stores.push(storeId);
-
-    // Save updated user to database
-    await user.save();
-
-    // Return updated user object
-    res.json(user);
-
-    console.log("user after save", user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ errors: [{ msg: "Server error" }] });
-    return;
   }
 };
 
@@ -173,7 +197,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       expiresIn: config.jwt.expiration,
     });
 
-    res.status(201).json({ token });
+    res.status(201).json({ token, user });
   } catch (err) {
     res.status(500).send("Server error");
   }
@@ -238,18 +262,6 @@ export const login = async (req: Request, res: Response) => {
     res.status(500).send("Server error");
   }
 };
-//* Get all users
-export const getAllUsers = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const users = await User.find().populate("stores");
-    res.json(users);
-  } catch (err) {
-    res.status(500).send("Server error");
-  }
-};
 
 //* Get user by ID
 export const getUserById = async (req: Request, res: Response) => {
@@ -284,8 +296,8 @@ export const deleteUserById = async (req: Request, res: Response) => {
     res.status(500).send("Server error");
   }
 };
-// Delete all users:
-export const deleteAllUsers = async (_req: Request, res: Response) => {
+//* Delete all users:
+export const deleteAllUsers = async (req: Request, res: Response) => {
   try {
     // Delete all users from database
     await User.deleteMany({});

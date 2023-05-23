@@ -24,7 +24,7 @@ export const getItemById = async (req: Request, res: Response) => {
       _id: req.params.itemId,
       itemId: req.params.itemId,
     }).populate("store");
-    console.log(item);
+
     if (!item) {
       return res.status(404).json({ msg: "Item not found" });
     }

@@ -6,6 +6,7 @@ import {
   updateFamilyById,
   deleteFamilyById,
   deleteAllFamilies,
+  getAllFamilyMembers,
 } from "../controllers/familyController";
 import { authMiddleware } from "../middleware/passport";
 authMiddleware;
@@ -13,10 +14,11 @@ authMiddleware;
 const familyRouter = Router();
 
 familyRouter.get("/", getAllFamilies);
+familyRouter.get("/:familyId/members", getAllFamilyMembers);
 familyRouter.post("/", createFamily);
-familyRouter.get("/:id", getFamilyById);
-familyRouter.put("/:id", authMiddleware, updateFamilyById);
-familyRouter.delete("/:id", deleteFamilyById);
+familyRouter.get("/:familyId", getFamilyById);
+familyRouter.put("/:familyId", authMiddleware, updateFamilyById);
+familyRouter.delete("/:familyId", deleteFamilyById);
 familyRouter.delete("/", deleteAllFamilies);
 
 export default familyRouter;

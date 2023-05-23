@@ -2,6 +2,7 @@ import { Document } from "mongoose";
 import Store, { IStore } from "../models/Store";
 import { Request, Response } from "express";
 import { IUser, User } from "../models/User";
+import Family from "../models/Family";
 interface UserDocument extends Document, IUser {}
 
 interface UserRequest extends Request {
@@ -71,6 +72,32 @@ export const getAllStores = async (
 ): Promise<void> => {
   try {
     const stores = await Store.find().populate("owner").populate("items");
+    res.json(stores);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+//$ Get/Fetch all Family Store //fix
+export const getFamilyStores = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { familyId } = req.params;
+
+    // Assuming you have a "familyId" field in the Family schema
+    const family = await Family.findById(familyId);
+
+    // Get the user IDs in the family
+    const userIds = family.familyMember.map((member) => member._id);
+
+    // Assuming you have a "userId" field in the User schema
+    const stores = await Store.find({ "owner.userId": { $in: userIds } })
+      .populate("owner")
+      .populate("items");
+
     res.json(stores);
   } catch (err) {
     console.error(err.message);

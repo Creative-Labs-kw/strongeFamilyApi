@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   deleteAllUsers,
   deleteUserById,
+  getAllUserFamilies,
   getAllUsers,
   getUserById,
   getUserStores,
@@ -15,8 +16,9 @@ import { authMiddleware } from "../middleware/passport";
 const userRouter = Router();
 
 userRouter.get("/", getAllUsers);
+userRouter.get("/:userId/families", getAllUserFamilies);
 userRouter.get("/:userId", getUserById);
-userRouter.get("/:userId/stores", getUserStores);
+userRouter.get("/:userId/stores", getUserStores); //$ get all user stores
 userRouter.post("/login", login); //$ SignIn
 userRouter.post("/register", register); //$ SignUp
 userRouter.put("/:userId", updateUserById);
