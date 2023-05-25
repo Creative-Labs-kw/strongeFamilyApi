@@ -93,7 +93,7 @@ export const updateFamilyById = async (
       "familyMember"
     );
 
-    logger.FamilyLogger.error(
+    logger.FamilyLogger.info(
       `Family with id ${req.params.familyId} found: ${JSON.stringify(family)}`
     );
 
