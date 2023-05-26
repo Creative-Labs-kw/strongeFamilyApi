@@ -1,5 +1,6 @@
 import mongoose, { Model } from "mongoose";
 export interface IUser extends mongoose.Document {
+  id: string;
   name: string;
   email: string;
   password: string;
@@ -46,13 +47,5 @@ const userSchema = new mongoose.Schema({
   families: [{ type: mongoose.Schema.Types.ObjectId, ref: "Family" }],
   isAdmin: { type: Boolean, require: false },
 });
-
-export interface IUser extends mongoose.Document {
-  name: string;
-  email: string;
-  password: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 export const User = mongoose.model<IUser>("User", userSchema);

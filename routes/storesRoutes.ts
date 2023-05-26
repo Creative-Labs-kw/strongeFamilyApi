@@ -16,7 +16,7 @@ storeRouter.get("/", getAllStores);
 storeRouter.get("/:familyId", getFamilyStores);
 storeRouter.post("/:userId", authMiddleware, createStore);
 storeRouter.get("/:storeId", getStoreById);
-storeRouter.put("/:id", updateStoreById);
+storeRouter.put("/:storeId/:userId", updateStoreById);
 storeRouter.delete("/:storeId", deleteStoreById);
 storeRouter.delete("/", deleteAllStores);
 

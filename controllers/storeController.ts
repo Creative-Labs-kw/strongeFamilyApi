@@ -1,10 +1,22 @@
 import { Document } from "mongoose";
 import Store, { IStore } from "../models/Store";
 import { Request, Response } from "express";
-import { IUser, User } from "../models/User";
+import { User } from "../models/User";
 import Family from "../models/Family";
-interface UserDocument extends Document, IUser {}
+import mongoose from "mongoose";
 
+interface UserDocument extends Document {
+  // Properties from IUser interface
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  createdAt: Date;
+  updatedAt: Date;
+  stores: string[];
+
+  // Additional properties specific to UserDocument if any
+}
 interface UserRequest extends Request {
   user?: UserDocument;
 }
@@ -14,54 +26,28 @@ interface StoreDocument extends Document<IStore> {
 }
 
 //$ Get updateStoreById
-export const updateStoreById = async (req: UserRequest, res: Response) => {
+export const updateStoreById = async (req: Request, res: Response) => {
+  const { storeName, description, phoneNumber } = req.body;
   try {
-    // Find store by id and populate the owner field
-    let store = await Store.findById(req.params.id)
-      .populate("owner")
-      .populate("items");
+    const store = await Store.findOne({
+      _id: req.params.storeId,
+      owner: new mongoose.Types.ObjectId(req.params.userId),
+    });
+
     if (!store) {
-      res.status(404).json({ errors: [{ msg: "Store not found" }] });
-      return;
+      return res.status(404).json({ msg: "Store not found" });
     }
 
-    // Check if the current user owns the store
-    if (store.owner && store.owner._id.toString() !== req.user?.id) {
-      res.status(401).json({ errors: [{ msg: "User not authorized" }] });
-      return;
-    }
+    store.storeName = storeName || store.storeName;
+    store.description = description || store.description;
+    store.phoneNumber = phoneNumber || store.phoneNumber;
 
-    // Update store properties
-    if (req.body) {
-      Object.keys(req.body).forEach((key) => {
-        if (key === "items") {
-          const newItems = req.body.items;
-          if (Array.isArray(newItems)) {
-            store.items = newItems;
-          } else {
-            res.status(400).json({
-              errors: [
-                {
-                  msg: "Invalid items format. Must be an array of objects",
-                },
-              ],
-            });
-            return;
-          }
-        } else {
-          store[key] = req.body[key];
-        }
-      });
-    }
-
-    // Save updated store to database
     await store.save();
 
-    // Return updated store object
     res.json(store);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    res.status(500).send("Server Error");
   }
 };
 
