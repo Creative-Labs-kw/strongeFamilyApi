@@ -15,6 +15,7 @@ export const getAllFamilies = async (
 ): Promise<void> => {
   try {
     const families = await Family.find().populate("familyMember");
+
     res.json(families);
   } catch (err) {
     console.error(err.message);
@@ -26,6 +27,7 @@ export const getAllFamilies = async (
 export const getAllFamilyMembers = async (res: Response): Promise<void> => {
   try {
     const members = await User.find({}).populate("families");
+
     res.json(members);
   } catch (err) {
     console.error(err.message);
