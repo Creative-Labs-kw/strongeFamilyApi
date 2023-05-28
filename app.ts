@@ -9,6 +9,7 @@ import familyRouter from "./routes/familyRoutes";
 import storeRouter from "./routes/storesRoutes";
 import userRouter from "./routes/userRoutes";
 import itemsRouter from "./routes/itemsRoutes";
+import notificationsRouter from "./routes/notificationsRoutes";
 
 dotenv.config();
 const isTestEnvironment = process.env.NODE_ENV === "test";
@@ -27,6 +28,7 @@ app.use("/users", userRouter);
 app.use("/families", familyRouter);
 app.use("/stores", storeRouter);
 app.use("/items", itemsRouter);
+app.use("/notifications", notificationsRouter);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

@@ -7,6 +7,7 @@ export interface IUser extends mongoose.Document {
   createdAt: Date;
   updatedAt: Date;
   stores: string[]; // add stores property here
+  isAdmin: boolean;
 }
 
 export interface UserModel extends Model<IUser> {}
