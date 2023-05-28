@@ -14,7 +14,9 @@ export const getAllFamilies = async (
   res: Response
 ): Promise<void> => {
   try {
-    const families = await Family.find().populate("familyMember");
+    const families = await Family.find()
+      .populate("familyMember")
+      .populate("notifications");
 
     res.json(families);
   } catch (err) {
@@ -91,9 +93,9 @@ export const updateFamilyById = async (
     }
 
     // Find family by id
-    let family = await Family.findById(req.params.familyId).populate(
-      "familyMember"
-    );
+    let family = await Family.findById(req.params.familyId)
+      .populate("familyMember")
+      .populate("notifications");
 
     logger.FamilyLogger.info(
       `Family with id ${req.params.familyId} found: ${JSON.stringify(family)}`

@@ -42,10 +42,10 @@ export const getStoresByOwnerId = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { id } = req.params;
+  const { userId } = req.params;
 
   try {
-    const stores = await Store.find({ owner: id });
+    const stores = await Store.find({ owner: userId });
     res.json(stores);
   } catch (err) {
     console.error(err);
@@ -90,7 +90,7 @@ export const updateUserStoresById = async (
 
   try {
     // Find user by id
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.userId);
 
     if (!user) {
       res.status(404).json({ errors: [{ msg: "User not found" }] });
@@ -122,26 +122,20 @@ export const updateUserById = async (
   req: IRequest,
   res: Response
 ): Promise<void> => {
-  const { name, email } = req.body;
+  const { name, email, isAdmin } = req.body;
 
   try {
     // Find user by id
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.userId);
     if (!user) {
       res.status(404).json({ errors: [{ msg: "User not found" }] });
       return;
     }
 
-    // Check if authenticated user is updating their own profile
-    const payload: JwtPayload = req.user as JwtPayload;
-    if (user._id.toString() !== payload.sub) {
-      res.status(401).json({ errors: [{ msg: "Unauthorized" }] });
-      return;
-    }
-
-    // Update user fields
-    user.name = name;
-    user.email = email;
+    // Update user fields if they are provided in the request body
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (isAdmin !== undefined) user.isAdmin = isAdmin;
 
     // Save updated user to database
     await user.save();
@@ -266,7 +260,7 @@ export const login = async (req: Request, res: Response) => {
 //* Get user by ID
 export const getUserById = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.userId);
 
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -282,7 +276,7 @@ export const getUserById = async (req: Request, res: Response) => {
 export const deleteUserById = async (req: Request, res: Response) => {
   try {
     // Find user by id
-    let user: UserDocument | null = await User.findById(req.params.id);
+    let user: UserDocument | null = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ errors: [{ msg: "User not found" }] });
     }

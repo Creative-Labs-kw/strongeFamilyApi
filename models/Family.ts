@@ -5,6 +5,7 @@ export interface IFamily extends Document {
   familyMember: mongoose.Types.ObjectId[];
   numberOfMembers: number;
   passwordText: string;
+  notifications: mongoose.Types.ObjectId[];
 }
 
 const familySchema = new Schema<IFamily>({
@@ -12,6 +13,9 @@ const familySchema = new Schema<IFamily>({
   familyMember: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   numberOfMembers: { type: Number, default: 0 },
   passwordText: { type: String, required: false, default: "", trim: true },
+  notifications: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "Notification" },
+  ],
 });
 
 export default model<IFamily>("Family", familySchema);
