@@ -77,7 +77,7 @@ export const getFamilyStores = async (
     const family = await Family.findById(familyId);
 
     // Get the user IDs in the family
-    const userIds = family.familyMember.map((member) => member._id);
+    const userIds = family.familyMembers.map((member) => member._id);
 
     // Assuming you have a "userId" field in the User schema
     const stores = await Store.find({ "owner.userId": { $in: userIds } })
