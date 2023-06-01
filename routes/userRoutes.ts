@@ -16,7 +16,7 @@ import { authMiddleware } from "../middleware/passport";
 const userRouter = Router();
 
 userRouter.get("/", getAllUsers);
-userRouter.get("/:userId/families", getAllUserFamilies);
+userRouter.get("/:userId/families", getAllUserFamilies); //$ get all user families
 userRouter.get("/:userId", getUserById);
 userRouter.get("/:userId/stores", getUserStores); //$ get all user stores
 userRouter.post("/login", login); //$ SignIn

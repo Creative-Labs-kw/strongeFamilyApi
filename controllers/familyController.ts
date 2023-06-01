@@ -58,8 +58,6 @@ export const createFamily = async (req: Request, res: Response) => {
   const { familyName, familyInfo, passwordText, isAdmin, familyMembers } =
     req.body;
 
-  console.log("req.body", req.body);
-
   try {
     // Check if family already exists
     let family = await Family.findOne({ familyName });
@@ -80,7 +78,6 @@ export const createFamily = async (req: Request, res: Response) => {
 
     // Save family to the database
     await family.save();
-    console.log("family", family);
 
     // Return family object
     res.json(family);

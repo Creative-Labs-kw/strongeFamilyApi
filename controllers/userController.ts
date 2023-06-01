@@ -73,8 +73,9 @@ export const getAllUserFamilies = async (
   res: Response
 ): Promise<void> => {
   const { userId } = req.params;
+
   try {
-    const Families = await Family.find({ familyMember: userId });
+    const Families = await Family.find({ familyMembers: userId });
     res.json(Families);
   } catch (err) {
     res.status(500).send("Server error");
