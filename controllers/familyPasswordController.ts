@@ -29,13 +29,15 @@ export const createFamilyPassword = async (req: Request, res: Response) => {
 //$ Get family password by ID
 export const getFamilyPassword = async (req: Request, res: Response) => {
   try {
-    const family = await Family.findById(req.params.familyId);
+    const familyId = req.params.familyId;
+
+    const family = await Family.findById(familyId);
 
     if (!family) {
       return res.status(404).json({ msg: "Family not found" });
     }
 
-    const { passwordText } = family;
+    const passwordText = family.passwordText; // Retrieve the password from the family document
 
     res.json({ passwordText });
   } catch (err) {
@@ -85,18 +87,6 @@ export const deleteFamilyPasswordById = async (req: Request, res: Response) => {
     await family.save();
 
     res.json({ msg: "Family passwordText deleted successfully" });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
-//$ Delete all passwords (assuming it means deleting all family passwords)
-export const deleteAllPasswords = async (_req: Request, res: Response) => {
-  try {
-    await Family.updateMany({}, { $set: { passwordText: "" } });
-
-    res.json({ msg: "All passwords deleted" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");

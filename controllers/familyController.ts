@@ -27,9 +27,13 @@ export const getAllFamilies = async (
 };
 
 //$ Get/Fetch all family Members:
-export const getAllFamilyMembers = async (res: Response): Promise<void> => {
+export const getAllFamilyMembers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const members = await User.find({}).populate("families");
+    console.log(members);
 
     res.json(members);
   } catch (err) {
@@ -153,19 +157,23 @@ export const updateFamilyById = async (req, res) => {
   }
 };
 
-//$ Delete a family
-export const deleteFamilyById = async (req: Request, res: Response) => {
+//$ Delete a family by id
+export const deleteFamilyById = async (
+  req: Request,
+  res: Response<any, Record<string, any>>
+): Promise<void> => {
   try {
+    const familyId = req.params.familyId;
+
     // Find family by id
-    let family: FamilyDocument | null = await Family.findById(
-      req.params.familyId
-    );
+    const family: FamilyDocument | null = await Family.findById(familyId);
     if (!family) {
-      return res.status(404).json({ errors: [{ msg: "Family not found" }] });
+      res.status(404).json({ errors: [{ msg: "Family not found" }] });
+      return;
     }
 
     // Delete family from database
-    await family.remove();
+    await Family.deleteOne({ _id: familyId });
 
     // Return success message
     res.json({ msg: "Family deleted" });

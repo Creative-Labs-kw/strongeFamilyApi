@@ -9,7 +9,7 @@ import {
   login,
   register,
   updateUserById,
-  updateUserStoresById,
+  updateUserStoreById,
 } from "../controllers/userController";
 import { authMiddleware } from "../middleware/passport";
 
@@ -22,11 +22,7 @@ userRouter.get("/:userId/stores", getUserStores); //$ get all user stores
 userRouter.post("/login", login); //$ SignIn
 userRouter.post("/register", register); //$ SignUp
 userRouter.put("/:userId", updateUserById);
-userRouter.put(
-  "/:userId/stores/:storeId",
-  authMiddleware,
-  updateUserStoresById
-);
+userRouter.put("/:userId/stores/:storeId", authMiddleware, updateUserStoreById);
 userRouter.delete("/:userId", deleteUserById);
 userRouter.delete("/", deleteAllUsers);
 

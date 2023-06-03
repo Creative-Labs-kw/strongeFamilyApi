@@ -114,7 +114,7 @@ export const deleteNotification = async (
   const { notificationId } = req.params;
   try {
     const deletedNotification: INotification | null =
-      await Notification.findByIdAndRemove(notificationId);
+      await Notification.findByIdAndDelete(notificationId);
     if (!deletedNotification) {
       res.status(404).json({ error: "Notification not found" });
       return;

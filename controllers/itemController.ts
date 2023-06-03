@@ -9,6 +9,7 @@ export const getAllItems = async (req: Request, res: Response) => {
     const items = await Item.find({ store: req.params.storeId }).populate(
       "store"
     );
+    console.log(items);
 
     res.json(items);
   } catch (err) {
@@ -19,11 +20,12 @@ export const getAllItems = async (req: Request, res: Response) => {
 
 // GET a specific item by ID
 export const getItemById = async (req: Request, res: Response) => {
+  const { itemId } = req.params;
   try {
     const item = await Item.findOne({
-      _id: req.params.itemId,
-      itemId: req.params.itemId,
+      _id: itemId,
     }).populate("store");
+    console.log(item);
 
     if (!item) {
       return res.status(404).json({ msg: "Item not found" });

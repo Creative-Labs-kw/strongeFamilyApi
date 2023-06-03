@@ -82,32 +82,42 @@ export const getAllUserFamilies = async (
   }
 };
 
-//* Update an user Stores
-export const updateUserStoresById = async (
+//* Update an user Store
+export const updateUserStoreById = async (
   req: IRequest,
   res: Response
 ): Promise<void> => {
   const { storeId } = req.params;
+  const { storeName, address, phoneNumber, imageUrl, description, links } =
+    req.body;
 
   try {
     // Find user by id
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.params.userId).populate("stores");
 
     if (!user) {
       res.status(404).json({ errors: [{ msg: "User not found" }] });
       return;
     }
 
-    // Make sure stores field is an array
-    if (!Array.isArray(user.stores)) {
-      user.stores = [];
+    // Find the store document by ID
+    const store = await Store.findById(storeId);
+
+    if (!store) {
+      res.status(404).json({ errors: [{ msg: "Store not found" }] });
+      return;
     }
 
-    // Update stores array with new store ID
-    user.stores.push(storeId);
+    // Update the store properties
+    store.storeName = storeName || store.storeName;
+    store.address = address || store.address;
+    store.phoneNumber = phoneNumber || store.phoneNumber;
+    store.imageUrl = imageUrl || store.imageUrl;
+    store.description = description || store.description;
+    store.links = links || store.links;
 
-    // Save updated user to database
-    await user.save();
+    // Save updated store to database
+    await store.save();
 
     // Return updated user object
     res.json(user);
@@ -283,7 +293,7 @@ export const deleteUserById = async (req: Request, res: Response) => {
     }
 
     // Delete user from database
-    await user.remove();
+    await user.deleteOne();
 
     // Return success message
     res.json({ msg: "User deleted" });
@@ -291,6 +301,7 @@ export const deleteUserById = async (req: Request, res: Response) => {
     res.status(500).send("Server error");
   }
 };
+
 //* Delete all users:
 export const deleteAllUsers = async (req: Request, res: Response) => {
   try {

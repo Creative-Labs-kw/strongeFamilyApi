@@ -13,9 +13,9 @@ import { authMiddleware } from "../middleware/passport";
 const storeRouter = Router();
 
 storeRouter.get("/", getAllStores);
-storeRouter.get("/:familyId", getFamilyStores);
+storeRouter.get("/:familyId/getFamilyStores", getFamilyStores);
+storeRouter.get("/:storeId/getStoreById", getStoreById);
 storeRouter.post("/:userId", authMiddleware, createStore);
-storeRouter.get("/:storeId", getStoreById);
 storeRouter.put("/:storeId/:userId", updateStoreById);
 storeRouter.delete("/:storeId", deleteStoreById);
 storeRouter.delete("/", deleteAllStores);
