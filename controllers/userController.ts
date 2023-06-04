@@ -58,6 +58,7 @@ export const getUserStores = async (
   res: Response
 ): Promise<void> => {
   const { userId } = req.params;
+
   try {
     const stores = await Store.find({ owner: userId });
     res.status(200).json(stores);

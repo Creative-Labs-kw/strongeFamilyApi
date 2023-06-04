@@ -7,9 +7,8 @@ import mongoose from "mongoose";
 export const getAllItems = async (req: Request, res: Response) => {
   try {
     const items = await Item.find({ store: req.params.storeId }).populate(
-      "store"
+      "store" // Update the reference to "stores"
     );
-    console.log(items);
 
     res.json(items);
   } catch (err) {
@@ -40,17 +39,19 @@ export const getItemById = async (req: Request, res: Response) => {
 // CREATE a new item
 export const createItem = async (req: Request, res: Response) => {
   const { itemName, price, description } = req.body;
+  const { storeId } = req.params;
 
   try {
     const newItem = new Item({
       itemName,
       price,
       description,
-      store: new mongoose.Types.ObjectId(req.params.storeId),
+      store: storeId,
     });
     await newItem.save();
 
-    const store = await Store.findById(req.params.storeId);
+    const store = await Store.findById(storeId).populate("items");
+
     store.items.push(newItem.id);
     await store.save();
 

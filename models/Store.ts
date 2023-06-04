@@ -3,7 +3,7 @@ import { IItem } from "./Item";
 
 export interface IStore extends Document {
   storeName: string;
-  owner: mongoose.Types.ObjectId;
+  owner: mongoose.Types.ObjectId; // Change field name from "user" to "owner"
   address: string;
   phoneNumber: string;
   imageUrl: string;
@@ -21,6 +21,7 @@ const StoreSchema = new Schema<IStore>({
     unique: true,
   },
   owner: {
+    // Change field name from "user" to "owner"
     type: Schema.Types.ObjectId,
     ref: "User",
     required: true,
