@@ -1,6 +1,7 @@
 import mongoose, { Model } from "mongoose";
+
 export interface IUser extends mongoose.Document {
-  id: string;
+  userId: string; // Change 'id' to 'userId'
   name: string;
   email: string;
   password: string;
@@ -11,6 +12,7 @@ export interface IUser extends mongoose.Document {
 }
 
 export interface UserModel extends Model<IUser> {}
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
