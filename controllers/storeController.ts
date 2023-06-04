@@ -65,7 +65,7 @@ export const getAllStores = async (
   }
 };
 
-//$ Get/Fetch all Family Store //fix
+//$ Get/Fetch all Family Store
 export const getFamilyStores = async (
   req: Request,
   res: Response
@@ -76,13 +76,11 @@ export const getFamilyStores = async (
     // Assuming you have a "familyId" field in the Family schema
     const family = await Family.findById(familyId);
 
-    // Get the user IDs in the family
-    const userIds = family.familyMembers.map((member) => member._id);
+    // Get the owner IDs in the family
+    const ownerIds = family.familyMembers.map((member) => member.toString()); // Convert ObjectId to string
 
-    // Assuming you have a "userId" field in the User schema
-    const stores = await Store.find({ "owner.userId": { $in: userIds } })
-      .populate("owner")
-      .populate("items");
+    // Find the stores owned by the family members
+    const stores = await Store.find({ owner: { $in: ownerIds } });
 
     res.json(stores);
   } catch (err) {
