@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 export const getAllItems = async (req: Request, res: Response) => {
   try {
     const items = await Item.find({ store: req.params.storeId }).populate(
-      "store"
+      "store" // Update the reference to "stores"
     );
 
     res.json(items);
@@ -19,11 +19,12 @@ export const getAllItems = async (req: Request, res: Response) => {
 
 // GET a specific item by ID
 export const getItemById = async (req: Request, res: Response) => {
+  const { itemId } = req.params;
   try {
     const item = await Item.findOne({
-      _id: req.params.itemId,
-      itemId: req.params.itemId,
+      _id: itemId,
     }).populate("store");
+    console.log(item);
 
     if (!item) {
       return res.status(404).json({ msg: "Item not found" });
@@ -38,17 +39,19 @@ export const getItemById = async (req: Request, res: Response) => {
 // CREATE a new item
 export const createItem = async (req: Request, res: Response) => {
   const { itemName, price, description } = req.body;
+  const { storeId } = req.params;
 
   try {
     const newItem = new Item({
       itemName,
       price,
       description,
-      store: new mongoose.Types.ObjectId(req.params.storeId),
+      store: storeId,
     });
     await newItem.save();
 
-    const store = await Store.findById(req.params.storeId);
+    const store = await Store.findById(storeId).populate("items");
+
     store.items.push(newItem.id);
     await store.save();
 

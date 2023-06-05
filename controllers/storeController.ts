@@ -65,7 +65,7 @@ export const getAllStores = async (
   }
 };
 
-//$ Get/Fetch all Family Store //fix
+//$ Get/Fetch all Family Store
 export const getFamilyStores = async (
   req: Request,
   res: Response
@@ -76,13 +76,11 @@ export const getFamilyStores = async (
     // Assuming you have a "familyId" field in the Family schema
     const family = await Family.findById(familyId);
 
-    // Get the user IDs in the family
-    const userIds = family.familyMember.map((member) => member._id);
+    // Get the owner IDs in the family
+    const ownerIds = family.familyMembers.map((member) => member.toString()); // Convert ObjectId to string
 
-    // Assuming you have a "userId" field in the User schema
-    const stores = await Store.find({ "owner.userId": { $in: userIds } })
-      .populate("owner")
-      .populate("items");
+    // Find the stores owned by the family members
+    const stores = await Store.find({ owner: { $in: ownerIds } });
 
     res.json(stores);
   } catch (err) {
@@ -114,7 +112,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
     // Create new store
     store = new Store({
       storeName,
-      owner: req.body.owner || req.user.id, // set the owner field to the current user's ID if not provided in the
+      owner: req.body.owner, // set the owner field to the current user's ID if not provided in the
       address,
       phoneNumber,
       description,
@@ -125,7 +123,7 @@ export const createStore = async (req: UserRequest, res: Response) => {
 
     // Add store ID to user's stores array
     await User.findByIdAndUpdate(
-      req.user.id,
+      req.body.owner,
       { $push: { stores: store._id } },
       { new: true }
     );
@@ -140,13 +138,17 @@ export const createStore = async (req: UserRequest, res: Response) => {
 
 //$ Get store by ID
 export const getStoreById = async (req: Request, res: Response) => {
+  const { storeId } = req.params;
+
   try {
-    const store = await Store.findById(req.params.id)
+    const store = await Store.findById(storeId)
       .populate("owner")
       .populate("items");
+
     if (!store) {
-      return res.status(404).json({ msg: "store not found" });
+      return res.status(404).json({ msg: "Store not found" });
     }
+
     res.json(store);
   } catch (err) {
     console.error(err.message);
@@ -156,15 +158,17 @@ export const getStoreById = async (req: Request, res: Response) => {
 
 //$ Delete a store
 export const deleteStoreById = async (req: Request, res: Response) => {
+  const { storeId } = req.params;
+
   try {
     // Find store by id
-    let store: StoreDocument | null = await Store.findById(req.params.id);
+    let store: StoreDocument | null = await Store.findById(storeId);
     if (!store) {
       return res.status(404).json({ errors: [{ msg: "store not found" }] });
     }
 
     // Delete store from database
-    await store.remove();
+    await store.deleteOne();
 
     // Return success message
     res.json({ msg: "store deleted" });

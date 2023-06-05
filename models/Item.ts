@@ -32,8 +32,8 @@ const ItemSchema = new Schema<IItem>({
     trim: true,
   },
   store: {
-    type: Schema.Types.ObjectId,
-    ref: "Store", // reference to the Store model
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Store",
   },
 });
 

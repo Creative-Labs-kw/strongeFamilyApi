@@ -3,6 +3,7 @@ import mongoose, { Document } from "mongoose";
 import Family, { IFamily } from "../models/Family";
 import { User } from "../models/User";
 import logger from "../utils/logger";
+import { IUser } from "../models/User";
 
 interface FamilyDocument extends Document<IFamily> {
   remove(): Promise<FamilyDocument>;
@@ -15,7 +16,7 @@ export const getAllFamilies = async (
 ): Promise<void> => {
   try {
     const families = await Family.find()
-      .populate("familyMember")
+      .populate("familyMembers")
       .populate("notifications");
 
     res.json(families);
@@ -26,9 +27,13 @@ export const getAllFamilies = async (
 };
 
 //$ Get/Fetch all family Members:
-export const getAllFamilyMembers = async (res: Response): Promise<void> => {
+export const getAllFamilyMembers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const members = await User.find({}).populate("families");
+    console.log(members);
 
     res.json(members);
   } catch (err) {
@@ -54,7 +59,8 @@ export const getFamilyById = async (req: Request, res: Response) => {
 
 //$ Create a new family
 export const createFamily = async (req: Request, res: Response) => {
-  const { familyName } = req.body;
+  const { familyName, familyInfo, passwordText, isAdmin, familyMembers } =
+    req.body;
 
   try {
     // Check if family already exists
@@ -65,12 +71,16 @@ export const createFamily = async (req: Request, res: Response) => {
         .json({ errors: [{ msg: "Family already exists" }] });
     }
 
-    // Create new family
     family = new Family({
       familyName,
+      familyInfo,
+      passwordText,
+      isAdmin,
+      familyMembers,
+      numberOfMembers: familyMembers.length,
     });
 
-    // Save family to database
+    // Save family to the database
     await family.save();
 
     // Return family object
@@ -82,10 +92,7 @@ export const createFamily = async (req: Request, res: Response) => {
 };
 
 //$ Get updateFamilyById
-export const updateFamilyById = async (
-  req: Request & { user: { id: string } },
-  res: Response
-) => {
+export const updateFamilyById = async (req, res) => {
   try {
     // Check whether user object is defined
     if (!req.user) {
@@ -94,7 +101,7 @@ export const updateFamilyById = async (
 
     // Find family by id
     let family = await Family.findById(req.params.familyId)
-      .populate("familyMember")
+      .populate("familyMembers")
       .populate("notifications");
 
     logger.FamilyLogger.info(
@@ -113,34 +120,25 @@ export const updateFamilyById = async (
     if (req.body.familyName) {
       family.familyName = req.body.familyName;
     }
-
-    // Update family members
-    if (req.body.familyMember) {
-      // Filter out invalid user IDs and undefined values
-      const validUserIds = req.body.familyMember
-        .filter((id) => id !== undefined && mongoose.Types.ObjectId.isValid(id))
-        .map((id) => new mongoose.Types.ObjectId(id));
-
-      // Fetch user objects for the given user IDs
-      const users = await User.find({ _id: { $in: validUserIds } });
-
-      // Update family members with the user objects
-      family.familyMember = users.map((user) => user._id);
+    // Update family info
+    if (req.body.familyInfo) {
+      family.familyInfo = req.body.familyInfo;
     }
 
-    // Add current user to family
-    const userId = req.user.id;
+    // Add current user to family members
+    const userId = req.user._id;
 
-    const isMemberExists = family.familyMember.some((member) =>
-      member.equals(new mongoose.Types.ObjectId(userId))
+    const isMemberExists = family.familyMembers.some(
+      (member) => member._id.toString() === userId.toString()
     );
 
     if (!isMemberExists) {
-      family.familyMember.push(new mongoose.Types.ObjectId(userId));
+      // Assuming familyMembers is an array of ObjectId references to users
+      family.familyMembers.push(userId);
     }
 
     // Update the numberOfMembers field based on the updated family members
-    family.numberOfMembers = family.familyMember.length;
+    family.numberOfMembers = family.familyMembers.length;
 
     // Save updated family to database
     await family.save();
@@ -159,19 +157,23 @@ export const updateFamilyById = async (
   }
 };
 
-//$ Delete a family
-export const deleteFamilyById = async (req: Request, res: Response) => {
+//$ Delete a family by id
+export const deleteFamilyById = async (
+  req: Request,
+  res: Response<any, Record<string, any>>
+): Promise<void> => {
   try {
+    const familyId = req.params.familyId;
+
     // Find family by id
-    let family: FamilyDocument | null = await Family.findById(
-      req.params.familyId
-    );
+    const family: FamilyDocument | null = await Family.findById(familyId);
     if (!family) {
-      return res.status(404).json({ errors: [{ msg: "Family not found" }] });
+      res.status(404).json({ errors: [{ msg: "Family not found" }] });
+      return;
     }
 
     // Delete family from database
-    await family.remove();
+    await Family.deleteOne({ _id: familyId });
 
     // Return success message
     res.json({ msg: "Family deleted" });
