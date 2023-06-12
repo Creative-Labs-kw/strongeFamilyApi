@@ -5,6 +5,7 @@ export interface IUser extends mongoose.Document {
   name: string;
   email: string;
   password: string;
+  imageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
   stores: string[]; // add stores property here
@@ -28,6 +29,12 @@ const userSchema = new mongoose.Schema({
     trim: true,
   },
   password: {
+    type: String,
+    required: false,
+    default: "",
+    trim: true,
+  },
+  imageUrl: {
     type: String,
     required: false,
     default: "",

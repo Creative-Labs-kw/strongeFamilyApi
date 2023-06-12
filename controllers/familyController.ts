@@ -33,7 +33,6 @@ export const getAllFamilyMembers = async (
 ): Promise<void> => {
   try {
     const members = await User.find({}).populate("families");
-    console.log(members);
 
     res.json(members);
   } catch (err) {

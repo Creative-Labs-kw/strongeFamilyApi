@@ -24,7 +24,6 @@ export const getItemById = async (req: Request, res: Response) => {
     const item = await Item.findOne({
       _id: itemId,
     }).populate("store");
-    console.log(item);
 
     if (!item) {
       return res.status(404).json({ msg: "Item not found" });
@@ -64,7 +63,9 @@ export const createItem = async (req: Request, res: Response) => {
 
 // UPDATE an existing item by ID
 export const updateItemById = async (req: Request, res: Response) => {
-  const { itemName, price, description } = req.body;
+  const { itemName, price, description, image } = req.body;
+  console.log("req.body", req.body);
+
   try {
     let item = await Item.findOne({
       _id: req.params.itemId,
@@ -73,9 +74,12 @@ export const updateItemById = async (req: Request, res: Response) => {
     if (!item) {
       return res.status(404).json({ msg: "Item not found" });
     }
-    item.itemName = itemName || item.itemName;
-    item.price = price || item.price;
-    item.description = description || item.description;
+    // Update user fields if they are provided in the request body
+    if (itemName) item.itemName = itemName;
+    if (price) item.price = price;
+    if (description) item.description = description;
+    if (image) item.image = image;
+
     await item.save();
     res.json(item);
   } catch (err) {

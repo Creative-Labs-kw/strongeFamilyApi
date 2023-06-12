@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 export interface IItem {
   itemName: string;
   price: number;
-  imageUrl: string;
+  image?: string;
   description: string;
   store: mongoose.Types.ObjectId; // reference to the Store model
 }
@@ -21,9 +21,11 @@ const ItemSchema = new Schema<IItem>({
     default: 0,
     trim: true,
   },
-  imageUrl: {
+  image: {
     type: String,
     required: false,
+    default: "",
+    trim: true,
   },
   description: {
     type: String,

@@ -8,7 +8,6 @@ import config from "../config";
 import logger from "../utils/logger";
 import { User, IUser } from "../models/User";
 import { Document } from "mongoose";
-import { JwtPayload } from "jsonwebtoken";
 import Store from "../models/Store";
 import Family from "../models/Family";
 interface IUserPayload {
@@ -134,7 +133,7 @@ export const updateUserById = async (
   req: IRequest,
   res: Response
 ): Promise<void> => {
-  const { name, email, isAdmin } = req.body;
+  const { name, email, isAdmin, imageUrl } = req.body;
 
   try {
     // Find user by id
@@ -147,6 +146,7 @@ export const updateUserById = async (
     // Update user fields if they are provided in the request body
     if (name) user.name = name;
     if (email) user.email = email;
+    if (imageUrl) user.imageUrl = imageUrl;
     if (isAdmin !== undefined) user.isAdmin = isAdmin;
 
     // Save updated user to database
