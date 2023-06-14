@@ -40,6 +40,8 @@ const StoreSchema = new Schema<IStore>({
   imageUrl: {
     type: String,
     required: false,
+    default: "",
+    trim: true,
   },
   description: {
     type: String,

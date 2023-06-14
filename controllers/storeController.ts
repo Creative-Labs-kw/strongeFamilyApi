@@ -27,9 +27,9 @@ interface StoreDocument extends Document<IStore> {
 
 //$ Get updateStoreById
 export const updateStoreById = async (req: Request, res: Response) => {
-  const { storeName, description, phoneNumber } = req.body;
+  const { storeName, description, phoneNumber, imageUrl } = req.body;
   try {
-    const store = await Store.findOne({
+    let store = await Store.findOne({
       _id: req.params.storeId,
       owner: new mongoose.Types.ObjectId(req.params.userId),
     });
@@ -41,6 +41,7 @@ export const updateStoreById = async (req: Request, res: Response) => {
     store.storeName = storeName || store.storeName;
     store.description = description || store.description;
     store.phoneNumber = phoneNumber || store.phoneNumber;
+    store.imageUrl = imageUrl || store.imageUrl;
 
     await store.save();
 

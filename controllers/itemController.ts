@@ -64,7 +64,6 @@ export const createItem = async (req: Request, res: Response) => {
 // UPDATE an existing item by ID
 export const updateItemById = async (req: Request, res: Response) => {
   const { itemName, price, description, image } = req.body;
-  console.log("req.body", req.body);
 
   try {
     let item = await Item.findOne({
