@@ -22,9 +22,9 @@ const familyRouter = Router();
 familyRouter.get("/", getAllFamilies);
 familyRouter.get("/members", getAllFamilyMembers);
 familyRouter.get("/:familyId", getFamilyById);
-familyRouter.post("/", createFamily);
+familyRouter.post("/", authMiddleware, createFamily);
 familyRouter.put("/:familyId", authMiddleware, updateFamilyById);
-familyRouter.delete("/:familyId", deleteFamilyById);
+familyRouter.delete("/:familyId", authMiddleware, deleteFamilyById);
 familyRouter.delete("/", deleteAllFamilies);
 
 // * Password
@@ -35,6 +35,10 @@ familyRouter.put(
   authMiddleware,
   updateFamilyPassword
 );
-familyRouter.delete("/:familyId/deletePassword", deleteFamilyPasswordById);
+familyRouter.delete(
+  "/:familyId/deletePassword",
+  authMiddleware,
+  deleteFamilyPasswordById
+);
 
 export default familyRouter;
