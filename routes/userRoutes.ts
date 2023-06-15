@@ -21,9 +21,9 @@ userRouter.get("/:userId", getUserById);
 userRouter.get("/:userId/stores", getUserStores); //$ get all user stores
 userRouter.post("/login", login); //$ SignIn
 userRouter.post("/register", register); //$ SignUp
-userRouter.put("/:userId", updateUserById);
+userRouter.put("/:userId", authMiddleware, updateUserById);
 userRouter.put("/:userId/stores/:storeId", authMiddleware, updateUserStoreById);
-userRouter.delete("/:userId", deleteUserById);
+userRouter.delete("/:userId", authMiddleware, deleteUserById);
 userRouter.delete("/", deleteAllUsers);
 
 export default userRouter;
