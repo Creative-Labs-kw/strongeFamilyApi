@@ -44,6 +44,7 @@ export const updateStoreById = async (req: Request, res: Response) => {
     store.imageUrl = imageUrl || store.imageUrl;
 
     await store.save();
+    console.log("store in the server side ", store);
 
     res.json(store);
   } catch (err) {
