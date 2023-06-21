@@ -27,7 +27,15 @@ interface StoreDocument extends Document<IStore> {
 
 //$ Get updateStoreById
 export const updateStoreById = async (req: Request, res: Response) => {
-  const { storeName, description, phoneNumber, imageUrl } = req.body;
+  const {
+    storeName,
+    description,
+    phoneNumber,
+    imageUrl,
+    instagramLink,
+    snapChatLink,
+    webLink,
+  } = req.body;
   try {
     let store = await Store.findOne({
       _id: req.params.storeId,
@@ -42,14 +50,17 @@ export const updateStoreById = async (req: Request, res: Response) => {
     store.description = description || store.description;
     store.phoneNumber = phoneNumber || store.phoneNumber;
     store.imageUrl = imageUrl || store.imageUrl;
+    store.instagramLink = instagramLink || store.instagramLink;
+    store.snapChatLink = snapChatLink || store.snapChatLink;
+    store.webLink = webLink || store.webLink;
 
     await store.save();
-    console.log("store in the server side ", store);
+    console.log(store);
 
-    res.json(store);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    res.json({ msg: "Store updated successfully", store });
+  } catch (error) {
+    console.log("Error while updating Store:", error);
+    res.status(500).json({ msg: "Server error" });
   }
 };
 

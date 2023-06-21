@@ -88,8 +88,16 @@ export const updateUserStoreById = async (
   res: Response
 ): Promise<void> => {
   const { storeId } = req.params;
-  const { storeName, address, phoneNumber, imageUrl, description, links } =
-    req.body;
+  const {
+    storeName,
+    address,
+    phoneNumber,
+    imageUrl,
+    description,
+    instagramLink,
+    snapChatLink,
+    webLink,
+  } = req.body;
 
   try {
     // Find user by id
@@ -114,7 +122,9 @@ export const updateUserStoreById = async (
     store.phoneNumber = phoneNumber || store.phoneNumber;
     store.imageUrl = imageUrl || store.imageUrl;
     store.description = description || store.description;
-    store.links = links || store.links;
+    store.instagramLink = instagramLink || store.instagramLink;
+    store.snapChatLink = snapChatLink || store.snapChatLink;
+    store.webLink = webLink || store.webLink;
 
     // Save updated store to database
     await store.save();

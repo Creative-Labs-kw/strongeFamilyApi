@@ -8,7 +8,9 @@ export interface IStore extends Document {
   phoneNumber: string;
   imageUrl: string;
   description: string;
-  links: string;
+  instagramLink: string;
+  snapChatLink: string;
+  webLink: string;
   items: IItem[];
 }
 
@@ -49,12 +51,25 @@ const StoreSchema = new Schema<IStore>({
     default: "",
     trim: true,
   },
-  links: {
-    type: String,
+  instagramLink: {
+    type: String, // Changed to an array of strings
     required: false,
     default: "",
     trim: true,
   },
+  snapChatLink: {
+    type: String, // Changed to an array of strings
+    required: false,
+    default: "",
+    trim: true,
+  },
+  webLink: {
+    type: String, // Changed to an array of strings
+    required: false,
+    default: "",
+    trim: true,
+  },
+
   items: [{ type: Schema.Types.ObjectId, ref: "Item" }],
 });
 
