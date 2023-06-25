@@ -1,23 +1,24 @@
 import { Request, Response } from "express";
-import Family from "../models/Family";
+import admin from "firebase-admin";
+
+const db = admin.firestore();
 
 //$ Create a family password
 export const createFamilyPassword = async (req: Request, res: Response) => {
   const { familyId, passwordText } = req.body;
 
   try {
-    const family = await Family.findById(familyId);
+    const familyRef = db.collection("families").doc(familyId);
+    const familyDoc = await familyRef.get();
 
-    if (!family) {
+    if (!familyDoc.exists) {
       return res.status(404).json({ msg: "Family not found" });
     }
 
-    // Create family password
-    family.passwordText = passwordText;
-    console.log(family);
-
-    // Save updated family to database
-    await family.save();
+    //? Update family password
+    await familyRef.update({
+      passwordText: passwordText,
+    });
 
     res.json({ msg: "Family password created successfully" });
   } catch (err) {
@@ -31,13 +32,14 @@ export const getFamilyPassword = async (req: Request, res: Response) => {
   try {
     const familyId = req.params.familyId;
 
-    const family = await Family.findById(familyId);
+    const familyRef = db.collection("families").doc(familyId);
+    const familyDoc = await familyRef.get();
 
-    if (!family) {
+    if (!familyDoc.exists) {
       return res.status(404).json({ msg: "Family not found" });
     }
 
-    const passwordText = family.passwordText; // Retrieve the password from the family document
+    const passwordText = familyDoc.data()?.passwordText;
 
     res.json({ passwordText });
   } catch (err) {
@@ -51,18 +53,19 @@ export const updateFamilyPassword = async (req: Request, res: Response) => {
   const { passwordText } = req.body;
 
   try {
-    const family = await Family.findById(req.params.familyId);
+    const familyId = req.params.familyId;
 
-    if (!family) {
+    const familyRef = db.collection("families").doc(familyId);
+    const familyDoc = await familyRef.get();
+
+    if (!familyDoc.exists) {
       return res.status(404).json({ msg: "Family not found" });
     }
 
-    // Update family password
-    family.passwordText = passwordText;
-    console.log(family);
-
-    // Save updated family to database
-    await family.save();
+    //$ Update family password
+    await familyRef.update({
+      passwordText: passwordText,
+    });
 
     res.json({ msg: "Family passwordText updated successfully" });
   } catch (err) {
@@ -74,17 +77,19 @@ export const updateFamilyPassword = async (req: Request, res: Response) => {
 //$ Delete family password by ID
 export const deleteFamilyPasswordById = async (req: Request, res: Response) => {
   try {
-    const family = await Family.findById(req.params.familyId);
+    const familyId = req.params.familyId;
 
-    if (!family) {
+    const familyRef = db.collection("families").doc(familyId);
+    const familyDoc = await familyRef.get();
+
+    if (!familyDoc.exists) {
       return res.status(404).json({ msg: "Family not found" });
     }
 
-    // Delete family password
-    family.passwordText = "";
-
-    // Save updated family to database
-    await family.save();
+    //$ Delete family password
+    await familyRef.update({
+      passwordText: admin.firestore.FieldValue.delete(),
+    });
 
     res.json({ msg: "Family passwordText deleted successfully" });
   } catch (err) {
