@@ -21,7 +21,7 @@ familyRouter.get("/", getAllFamilies);
 familyRouter.get("/members/:familyId", getAllFamilyMembers);
 familyRouter.get("/:familyId", getFamilyById);
 familyRouter.post("/", createFamily);
-familyRouter.put("/:familyId", updateFamilyById);
+familyRouter.put("/:familyId/:userId", updateFamilyById);
 familyRouter.delete("/:familyId", deleteFamilyById);
 familyRouter.delete("/", deleteAllFamilies);
 

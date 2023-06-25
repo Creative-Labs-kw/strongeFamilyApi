@@ -19,7 +19,7 @@ router.get("/", getAllUsers);
 router.get("/stores/:userId", getUserStores);
 router.get("/families/:userId", getAllUserFamilies);
 router.get("/:userId", getUserById);
-router.put("/stores/:storeId", updateUserStoreById);
+router.put("/store/:storeId", updateUserStoreById);
 router.put("/:userId", updateUserById);
 router.post("/register", register);
 router.post("/login", login);
