@@ -1,20 +1,15 @@
-import { Router } from "express";
+import express from "express";
 import {
-  createNotification,
-  deleteAllNotifications,
-  deleteNotification,
-  getAllNotifications,
-  getNotificationById,
-  updateNotification,
+  sendNotificationToDevice,
+  sendNotificationToTopic,
 } from "../controllers/notificationController";
 
-const notificationsRouter = Router();
+const router = express.Router();
 
-notificationsRouter.get("/", getAllNotifications);
-notificationsRouter.get("/:notificationId", getNotificationById);
-notificationsRouter.post("/:familyId", createNotification);
-notificationsRouter.put("/:familyId/:notificationId", updateNotification);
-notificationsRouter.delete("/:notificationId", deleteNotification);
-notificationsRouter.delete("/", deleteAllNotifications);
+// Route for sending a notification to a specific device
+router.post("/notification/device", sendNotificationToDevice);
 
-export default notificationsRouter;
+// Route for sending a notification to a specific topic
+router.post("/notification/topic", sendNotificationToTopic);
+
+export default router;
