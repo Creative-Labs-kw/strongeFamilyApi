@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import admin from "firebase-admin";
-import { IIUser } from "./userController";
 
 const db = admin.firestore();
 
@@ -125,9 +124,10 @@ export const createFamily = async (req: Request, res: Response) => {
   }
 };
 
-//$ Update family by ID (FIX)
+//$ Update family by ID
 export const updateFamilyById = async (req: Request, res: Response) => {
   try {
+    const userId = req.params.userId;
     const familyId = req.params.familyId;
     const familyRef = db.collection("families").doc(familyId);
 
@@ -150,19 +150,18 @@ export const updateFamilyById = async (req: Request, res: Response) => {
 
     // Extract user IDs from familyMembers array and filter out undefined values
     const userIds = req.body.familyMembers
-      .map((member: IIUser | string) =>
-        typeof member === "string" ? member : member.uid
-      )
+      .map((member: any) => member.userId)
       .filter((userId: string) => userId);
 
     // Add current user to family members if not already present
-    const userId = req.user; // ERRO HERE
     if (!userIds.includes(userId)) {
       userIds.push(userId);
       familyData.numberOfMembers = userIds.length;
     }
 
-    familyData.familyMembers = userIds;
+    familyData.familyMembers = userIds.map((userId: string) => ({
+      userId: userId,
+    }));
 
     await familyRef.set(familyData);
 
