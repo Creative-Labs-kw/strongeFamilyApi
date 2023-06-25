@@ -1,29 +1,173 @@
-import { Document } from "mongoose";
-import Store, { IStore } from "../models/Store";
 import { Request, Response } from "express";
-import { User } from "../models/User";
-import Family from "../models/Family";
-import mongoose from "mongoose";
+import admin from "firebase-admin";
+import { IIUser } from "./userController";
+import { log } from "console";
 
-interface UserDocument extends Document {
-  // Properties from IUser interface
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  createdAt: Date;
-  updatedAt: Date;
-  stores: string[];
-
-  // Additional properties specific to UserDocument if any
-}
-interface UserRequest extends Request {
-  user?: UserDocument;
+interface Store {
+  uid: string;
+  storeName: string;
+  owner: string;
+  description: string;
+  phoneNumber: string;
+  imageUrl: string;
+  instagramLink: string;
+  snapChatLink: string;
+  webLink: string;
 }
 
-interface StoreDocument extends Document<IStore> {
-  remove(): Promise<StoreDocument>;
-}
+//$ Get/Fetch all Store
+export const getAllStores = async (req: Request, res: Response) => {
+  try {
+    const snapshot = await admin.firestore().collection("stores").get();
+    const stores: Store[] = [];
+
+    snapshot.forEach((doc) => {
+      const store: Store = {
+        uid: doc.id,
+        storeName: doc.data().storeName,
+        owner: doc.data().owner,
+        description: doc.data().description,
+        phoneNumber: doc.data().phoneNumber,
+        imageUrl: doc.data().imageUrl,
+        instagramLink: doc.data().instagramLink,
+        snapChatLink: doc.data().snapChatLink,
+        webLink: doc.data().webLink,
+      };
+      stores.push(store);
+    });
+
+    res.json(stores);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+//$ Get/Fetch all Family Store
+export const getFamilyStores = async (req: Request, res: Response) => {
+  try {
+    const { familyId } = req.params;
+
+    const familyDoc = await admin
+      .firestore()
+      .collection("families")
+      .doc(familyId)
+      .get();
+    if (!familyDoc.exists) {
+      return res.status(404).json({ msg: "Family not found" });
+    }
+
+    const familyData = familyDoc.data();
+    const ownerIds: string[] = familyData?.familyMembers || [];
+
+    const snapshot = await admin
+      .firestore()
+      .collection("stores")
+      .where("owner", "in", ownerIds)
+      .get();
+
+    const stores: Store[] = [];
+
+    snapshot.forEach((doc) => {
+      const store: Store = {
+        uid: doc.id,
+        storeName: doc.data().storeName,
+        owner: doc.data().owner,
+        description: doc.data().description,
+        phoneNumber: doc.data().phoneNumber,
+        imageUrl: doc.data().imageUrl,
+        instagramLink: doc.data().instagramLink,
+        snapChatLink: doc.data().snapChatLink,
+        webLink: doc.data().webLink,
+      };
+      stores.push(store);
+    });
+
+    res.json(stores);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+//$ Get store by ID
+export const getStoreById = async (req: Request, res: Response) => {
+  const { storeId } = req.params;
+
+  try {
+    const storeDoc = await admin
+      .firestore()
+      .collection("stores")
+      .doc(storeId)
+      .get();
+
+    if (!storeDoc.exists) {
+      return res.status(404).json({ msg: "Store not found" });
+    }
+
+    const store: Store = {
+      uid: storeDoc.id,
+      storeName: storeDoc.data()?.storeName,
+      owner: storeDoc.data()?.owner,
+      description: storeDoc.data()?.description,
+      phoneNumber: storeDoc.data()?.phoneNumber,
+      imageUrl: storeDoc.data()?.imageUrl,
+      instagramLink: storeDoc.data()?.instagramLink,
+      snapChatLink: storeDoc.data()?.snapChatLink,
+      webLink: storeDoc.data()?.webLink,
+    };
+
+    res.json(store);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+//$ Create a new store
+export const createStore = async (req: Request, res: Response) => {
+  const { storeName, address, phoneNumber, description } = req.body;
+  const { userId } = req.params;
+
+  try {
+    // Check if store already exists
+    const snapshot = await admin
+      .firestore()
+      .collection("stores")
+      .where("storeName", "==", storeName)
+      .get();
+
+    if (!snapshot.empty) {
+      return res
+        .status(400)
+        .json({ errors: [{ msg: "Store already exists" }] });
+    }
+
+    // Create new store
+    const newStore = {
+      storeName,
+      owner: userId,
+      address,
+      phoneNumber,
+      description,
+    };
+
+    const storeRef = await admin.firestore().collection("stores").add(newStore);
+
+    // Add store ID to user's stores array
+    await admin
+      .firestore()
+      .collection("users")
+      .doc(userId)
+      .update({ stores: admin.firestore.FieldValue.arrayUnion(storeRef.id) });
+
+    res.status(201).json({ id: storeRef.id, ...newStore });
+  } catch (err) {
+    console.error(err.message);
+    console.log("Error creating store:", err);
+    res.status(500).send("Server error");
+  }
+};
 
 //$ Get updateStoreById
 export const updateStoreById = async (req: Request, res: Response) => {
@@ -36,136 +180,37 @@ export const updateStoreById = async (req: Request, res: Response) => {
     snapChatLink,
     webLink,
   } = req.body;
-  try {
-    let store = await Store.findOne({
-      _id: req.params.storeId,
-      owner: new mongoose.Types.ObjectId(req.params.userId),
-    });
 
-    if (!store) {
+  try {
+    const storeId = req.params.storeId;
+    const userId = req.params.userId;
+
+    const storeRef = admin.firestore().collection("stores").doc(storeId);
+    const storeDoc = await storeRef.get();
+
+    if (!storeDoc.exists) {
       return res.status(404).json({ msg: "Store not found" });
     }
 
-    store.storeName = storeName || store.storeName;
-    store.description = description || store.description;
-    store.phoneNumber = phoneNumber || store.phoneNumber;
-    store.imageUrl = imageUrl || store.imageUrl;
-    store.instagramLink = instagramLink || store.instagramLink;
-    store.snapChatLink = snapChatLink || store.snapChatLink;
-    store.webLink = webLink || store.webLink;
+    // Ensure that the authenticated user is the owner of the store
+    if (storeDoc.data()?.owner !== userId) {
+      return res.status(401).json({ msg: "Unauthorized" });
+    }
 
-    await store.save();
-    console.log(store);
+    await storeRef.update({
+      storeName: storeName || storeDoc.data()?.storeName,
+      description: description || storeDoc.data()?.description,
+      phoneNumber: phoneNumber || storeDoc.data()?.phoneNumber,
+      imageUrl: imageUrl || storeDoc.data()?.imageUrl,
+      instagramLink: instagramLink || storeDoc.data()?.instagramLink,
+      snapChatLink: snapChatLink || storeDoc.data()?.snapChatLink,
+      webLink: webLink || storeDoc.data()?.webLink,
+    });
 
-    res.json({ msg: "Store updated successfully", store });
+    res.json({ msg: "Store updated successfully" });
   } catch (error) {
     console.log("Error while updating Store:", error);
     res.status(500).json({ msg: "Server error" });
-  }
-};
-
-//$ Get/Fetch all Store
-export const getAllStores = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const stores = await Store.find().populate("owner").populate("items");
-    res.json(stores);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
-//$ Get/Fetch all Family Store
-export const getFamilyStores = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { familyId } = req.params;
-
-    // Assuming you have a "familyId" field in the Family schema
-    const family = await Family.findById(familyId);
-
-    // Get the owner IDs in the family
-    const ownerIds = family.familyMembers.map((member) => member.toString()); // Convert ObjectId to string
-
-    // Find the stores owned by the family members
-    const stores = await Store.find({ owner: { $in: ownerIds } });
-
-    res.json(stores);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
-//$ Create a new store
-export const createStore = async (req: UserRequest, res: Response) => {
-  const { storeName, address, phoneNumber, description } = req.body;
-
-  try {
-    // Check if store already exists
-    let store = await Store.findOne({ storeName });
-    if (store) {
-      return res
-        .status(400)
-        .json({ errors: [{ msg: "Store already exists" }] });
-    }
-
-    // Check if user is authenticated
-    if (!req.user) {
-      return res
-        .status(401)
-        .json({ errors: [{ msg: "User not authenticated" }] });
-    }
-
-    // Create new store
-    store = new Store({
-      storeName,
-      owner: req.body.owner, // set the owner field to the current user's ID if not provided in the
-      address,
-      phoneNumber,
-      description,
-    });
-
-    // Save store to database
-    await store.save();
-
-    // Add store ID to user's stores array
-    await User.findByIdAndUpdate(
-      req.body.owner,
-      { $push: { stores: store._id } },
-      { new: true }
-    );
-    // Return store object
-    res.status(201).json(store);
-  } catch (err) {
-    console.error(err.message);
-    console.log("Error creating store:", err);
-    res.status(500).send("Server error");
-  }
-};
-
-//$ Get store by ID
-export const getStoreById = async (req: Request, res: Response) => {
-  const { storeId } = req.params;
-
-  try {
-    const store = await Store.findById(storeId)
-      .populate("owner")
-      .populate("items");
-
-    if (!store) {
-      return res.status(404).json({ msg: "Store not found" });
-    }
-
-    res.json(store);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
   }
 };
 
@@ -174,31 +219,36 @@ export const deleteStoreById = async (req: Request, res: Response) => {
   const { storeId } = req.params;
 
   try {
-    // Find store by id
-    let store: StoreDocument | null = await Store.findById(storeId);
-    if (!store) {
-      return res.status(404).json({ errors: [{ msg: "store not found" }] });
+    const storeRef = admin.firestore().collection("stores").doc(storeId);
+    const storeDoc = await storeRef.get();
+
+    if (!storeDoc.exists) {
+      return res.status(404).json({ errors: [{ msg: "Store not found" }] });
     }
 
-    // Delete store from database
-    await store.deleteOne();
+    await storeRef.delete();
 
-    // Return success message
-    res.json({ msg: "store deleted" });
+    res.json({ msg: "Store deleted" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
   }
 };
 
-//$ Delete all Store
+//$ Delete all Stores
 export const deleteAllStores = async (req: Request, res: Response) => {
   try {
-    // Delete all Store from database
-    await Store.deleteMany();
+    const snapshot = await admin.firestore().collection("stores").get();
 
-    // Return success message
-    res.json({ msg: "All Store deleted" });
+    const batch = admin.firestore().batch();
+
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    res.json({ msg: "All stores deleted" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");

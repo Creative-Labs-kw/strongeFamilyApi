@@ -13,6 +13,8 @@ export interface IIUser {
   stores: string[];
   isAdmin: boolean;
   uid: string; // Firebase UID
+  _id: string;
+  id: string;
 }
 //$ Get all users
 export const getAllUsers = async (
