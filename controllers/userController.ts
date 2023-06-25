@@ -2,20 +2,18 @@
 import { Request, Response } from "express";
 import admin from "firebase-admin";
 import { validationResult } from "express-validator";
-export interface IIUser {
+
+export interface User {
   userId: string;
-  name: string;
+  uid: string;
+  name?: string;
   email: string;
   password: string;
   imageUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
   stores: string[];
-  isAdmin: boolean;
-  uid: string; // Firebase UID
-  _id: string;
-  id: string;
+  isAdmin?: boolean;
 }
+
 //$ Get all users
 export const getAllUsers = async (
   req: Request,
@@ -46,7 +44,7 @@ export const getUserStores = async (
       .collection("stores")
       .where("owner", "==", userId)
       .get();
-    const stores: any[] = [];
+    const stores = [];
     storesSnapshot.forEach((doc) => {
       stores.push(doc.data());
     });
@@ -99,7 +97,7 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-//$ Update a store owned by a user(Fix)
+//$ Update a store owned by a user
 export const updateUserStoreById = async (
   req: Request,
   res: Response
@@ -142,34 +140,30 @@ export const updateUserStoreById = async (
     res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
-//$ Update a user by id (Fix)
-export const updateUserById = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+
+//$ Update a user by id
+export const updateUserById = async (req: Request, res: Response) => {
   const { name, email, isAdmin, imageUrl } = req.body;
+  const userId = req.params.userId;
 
   try {
-    const user = await admin.auth().updateUser(req.params.userId, {
+    await admin.auth().updateUser(userId, {
       displayName: name,
       email: email,
       photoURL: imageUrl,
     });
 
-    const updatedData: any = {};
-    if (isAdmin !== undefined) updatedData.isAdmin = isAdmin;
+    const userRef = admin.firestore().collection("users").doc(userId);
 
-    await admin
-      .firestore()
-      .collection("users")
-      .doc(req.params.userId)
-      .update(updatedData);
+    await userRef.update({ isAdmin: isAdmin });
 
-    res.json(user);
+    res.json({ msg: "User updated successfully" });
   } catch (err) {
+    console.error(err.message);
     res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
+
 // $ Register / SignUp  a user
 export const register = async (req: Request, res: Response): Promise<void> => {
   const errors = validationResult(req);
@@ -216,6 +210,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
+
 // $ Login / SignIn a user
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;

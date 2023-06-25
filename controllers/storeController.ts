@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import admin from "firebase-admin";
-import { IIUser } from "./userController";
-import { log } from "console";
 
-interface Store {
+export interface Store {
   uid: string;
   storeName: string;
   owner: string;
