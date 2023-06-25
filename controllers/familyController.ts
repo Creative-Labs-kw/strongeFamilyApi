@@ -1,12 +1,17 @@
 import { Request, Response } from "express";
-import mongoose, { Document } from "mongoose";
-import Family, { IFamily } from "../models/Family";
-import { User } from "../models/User";
-import logger from "../utils/logger";
-import { IUser } from "../models/User";
+import admin from "firebase-admin";
+import { IIUser } from "./userController";
 
-interface FamilyDocument extends Document<IFamily> {
-  remove(): Promise<FamilyDocument>;
+const db = admin.firestore();
+
+interface IFamily {
+  familyName: string;
+  familyMembers: string[]; // Assuming it contains user IDs as strings
+  numberOfMembers: number;
+  passwordText: string;
+  notifications: string[]; // Assuming it contains notification IDs as strings
+  familyInfo: string;
+  isAdmin: boolean;
 }
 
 //$ Get/Fetch all families
@@ -15,9 +20,13 @@ export const getAllFamilies = async (
   res: Response
 ): Promise<void> => {
   try {
-    const families = await Family.find()
-      .populate("familyMembers")
-      .populate("notifications");
+    const snapshot = await db.collection("families").get();
+    const families: IFamily[] = [];
+
+    snapshot.forEach((doc) => {
+      const family = doc.data() as IFamily;
+      families.push(family);
+    });
 
     res.json(families);
   } catch (err) {
@@ -31,8 +40,30 @@ export const getAllFamilyMembers = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const { familyId } = req.params;
+
   try {
-    const members = await User.find({}).populate("families");
+    const familyDoc = await db.collection("families").doc(familyId).get();
+
+    if (!familyDoc.exists) {
+      res.status(404).json({ errors: [{ msg: "Family not found" }] });
+      return;
+    }
+
+    const familyData = familyDoc.data();
+    const familyMembers = familyData.familyMembers;
+
+    // Fetch the user documents or user details based on the familyMembers array
+    const usersSnapshot = await db
+      .collection("users")
+      .where(admin.firestore.FieldPath.documentId(), "in", familyMembers)
+      .get();
+
+    const members: any[] = [];
+    usersSnapshot.forEach((doc) => {
+      const member = doc.data();
+      members.push(member);
+    });
 
     res.json(members);
   } catch (err) {
@@ -44,45 +75,49 @@ export const getAllFamilyMembers = async (
 //$ Get family by ID
 export const getFamilyById = async (req: Request, res: Response) => {
   try {
-    const family = await Family.findById(req.params.familyId);
+    const familyId = req.params.familyId;
+    const doc = await db.collection("families").doc(familyId).get();
 
-    if (!family) {
+    if (!doc.exists) {
       return res.status(404).json({ msg: "Family not found" });
     }
+
+    const family = doc.data() as IFamily;
     res.json(family);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
   }
 };
-//$ Create a new family
 
+//$ Create a new family
 export const createFamily = async (req: Request, res: Response) => {
   const { familyName, familyInfo, passwordText, isAdmin, familyMembers } =
     req.body;
 
   try {
-    // Check if family already exists
-    let family = await Family.findOne({ familyName });
-    if (family) {
-      return res
-        .status(400)
-        .json({ errors: [{ msg: "Family already exists" }] });
-    }
-
-    family = new Family({
+    const docRef = db.collection("families").doc();
+    const family: IFamily = {
       familyName,
       familyInfo,
       passwordText,
       isAdmin,
-      familyMembers,
-      numberOfMembers: familyMembers.length,
-    });
+      familyMembers: [], // Initialize an empty array for familyMembers
+      numberOfMembers: 0, // Initialize numberOfMembers to 0
+      notifications: [],
+    };
 
-    // Save family to the database
-    await family.save();
+    // Associate users with the family by adding their document references or IDs
+    for (const memberId of familyMembers) {
+      // Assuming memberId is the user ID or the reference to the user document
+      family.familyMembers.push(memberId);
+    }
 
-    // Return family object
+    // Update the numberOfMembers field
+    family.numberOfMembers = family.familyMembers.length;
+
+    await docRef.set(family);
+
     res.json(family);
   } catch (err) {
     console.error(err.message);
@@ -90,91 +125,71 @@ export const createFamily = async (req: Request, res: Response) => {
   }
 };
 
-//$ Get updateFamilyById
-export const updateFamilyById = async (req, res) => {
+//$ Update family by ID (FIX)
+export const updateFamilyById = async (req: Request, res: Response) => {
   try {
-    // Check whether user object is defined
-    if (!req.user) {
-      throw new Error("User object is undefined");
-    }
+    const familyId = req.params.familyId;
+    const familyRef = db.collection("families").doc(familyId);
 
-    // Find family by id
-    let family = await Family.findById(req.params.familyId)
-      .populate("familyMembers")
-      .populate("notifications");
-
-    logger.FamilyLogger.info(
-      `Family with id ${req.params.familyId} found: ${JSON.stringify(family)}`
-    );
-
-    if (!family) {
-      logger.FamilyLogger.error(
-        `Family with id ${req.params.familyId} not found`
-      );
+    const familySnapshot = await familyRef.get();
+    if (!familySnapshot.exists) {
       res.status(404).json({ errors: [{ msg: "Family not found" }] });
       return;
     }
 
+    const familyData = familySnapshot.data();
+
     // Update family name
     if (req.body.familyName) {
-      family.familyName = req.body.familyName;
+      familyData.familyName = req.body.familyName;
     }
     // Update family info
     if (req.body.familyInfo) {
-      family.familyInfo = req.body.familyInfo;
+      familyData.familyInfo = req.body.familyInfo;
     }
 
-    // Add current user to family members
-    const userId = req.user._id;
+    // Extract user IDs from familyMembers array and filter out undefined values
+    const userIds = req.body.familyMembers
+      .map((member: IIUser | string) =>
+        typeof member === "string" ? member : member.uid
+      )
+      .filter((userId: string) => userId);
 
-    const isMemberExists = family.familyMembers.some(
-      (member) => member._id.toString() === userId.toString()
-    );
-
-    if (!isMemberExists) {
-      // Assuming familyMembers is an array of ObjectId references to users
-      family.familyMembers.push(userId);
+    // Add current user to family members if not already present
+    const userId = req.user; // ERRO HERE
+    if (!userIds.includes(userId)) {
+      userIds.push(userId);
+      familyData.numberOfMembers = userIds.length;
     }
 
-    // Update the numberOfMembers field based on the updated family members
-    family.numberOfMembers = family.familyMembers.length;
+    familyData.familyMembers = userIds;
 
-    // Save updated family to database
-    await family.save();
+    await familyRef.set(familyData);
 
-    logger.FamilyLogger.info(
-      `Family with id ${req.params.familyId} successfully updated`
-    );
-
-    // Return updated family object
-    res.json(family);
+    res.json(familyData);
   } catch (err) {
-    logger.FamilyLogger.error(
-      `Error updating family with id ${req.params.familyId}: ${err.message}`
-    );
+    console.error(err.message);
     res.status(500).send("Server error");
   }
 };
 
-//$ Delete a family by id
+//$ Delete a family by ID
 export const deleteFamilyById = async (
   req: Request,
   res: Response<any, Record<string, any>>
 ): Promise<void> => {
   try {
     const familyId = req.params.familyId;
+    const familyRef = db.collection("families").doc(familyId);
 
-    // Find family by id
-    const family: FamilyDocument | null = await Family.findById(familyId);
-    if (!family) {
+    const familySnapshot = await familyRef.get();
+    if (!familySnapshot.exists) {
       res.status(404).json({ errors: [{ msg: "Family not found" }] });
       return;
     }
 
-    // Delete family from database
-    await Family.deleteOne({ _id: familyId });
+    await familyRef.delete();
 
-    // Return success message
     res.json({ msg: "Family deleted" });
   } catch (err) {
     console.error(err.message);
@@ -185,10 +200,15 @@ export const deleteFamilyById = async (
 //$ Delete all families
 export const deleteAllFamilies = async (req: Request, res: Response) => {
   try {
-    // Delete all families from database
-    await Family.deleteMany();
+    const snapshot = await db.collection("families").get();
+    const batch = db.batch();
 
-    // Return success message
+    snapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
     res.json({ msg: "All families deleted" });
   } catch (err) {
     console.error(err.message);

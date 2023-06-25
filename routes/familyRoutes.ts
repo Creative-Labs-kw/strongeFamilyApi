@@ -8,37 +8,27 @@ import {
   deleteAllFamilies,
   getAllFamilyMembers,
 } from "../controllers/familyController";
-import { authMiddleware } from "../middleware/passport";
 import {
   createFamilyPassword,
   deleteFamilyPasswordById,
   getFamilyPassword,
   updateFamilyPassword,
 } from "../controllers/familyPasswordController";
-authMiddleware;
 
 const familyRouter = Router();
 
 familyRouter.get("/", getAllFamilies);
-familyRouter.get("/members", getAllFamilyMembers);
+familyRouter.get("/members/:familyId", getAllFamilyMembers);
 familyRouter.get("/:familyId", getFamilyById);
-familyRouter.post("/", authMiddleware, createFamily);
-familyRouter.put("/:familyId", authMiddleware, updateFamilyById);
-familyRouter.delete("/:familyId", authMiddleware, deleteFamilyById);
+familyRouter.post("/", createFamily);
+familyRouter.put("/:familyId", updateFamilyById);
+familyRouter.delete("/:familyId", deleteFamilyById);
 familyRouter.delete("/", deleteAllFamilies);
 
 // * Password
 familyRouter.post("/createPassword", createFamilyPassword);
 familyRouter.get("/:familyId/password", getFamilyPassword);
-familyRouter.put(
-  "/:familyId/updatePassword",
-  authMiddleware,
-  updateFamilyPassword
-);
-familyRouter.delete(
-  "/:familyId/deletePassword",
-  authMiddleware,
-  deleteFamilyPasswordById
-);
+familyRouter.put("/:familyId/updatePassword", updateFamilyPassword);
+familyRouter.delete("/:familyId/deletePassword", deleteFamilyPasswordById);
 
 export default familyRouter;
