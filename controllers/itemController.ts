@@ -53,6 +53,7 @@ export const createItem = async (req: Request, res: Response) => {
 
     store.items.push(newItem.id);
     await store.save();
+    console.log(newItem);
 
     res.json(newItem);
   } catch (err) {

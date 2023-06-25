@@ -11,7 +11,7 @@ export interface IItem {
 const ItemSchema = new Schema<IItem>({
   itemName: {
     type: String,
-    required: false,
+    required: true,
     default: "",
     trim: true,
   },

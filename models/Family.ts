@@ -10,10 +10,10 @@ export interface IFamily extends Document {
 }
 
 const familySchema = new Schema<IFamily>({
-  familyName: { type: String, required: false, default: "", trim: true },
+  familyName: { type: String, required: true, default: "", trim: true },
   familyMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   numberOfMembers: { type: Number, default: 0 },
-  passwordText: { type: String, required: false, default: "", trim: true },
+  passwordText: { type: String, required: true, default: "", trim: true },
   notifications: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Notification" },
   ],

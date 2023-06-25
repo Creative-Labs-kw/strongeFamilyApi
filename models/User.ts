@@ -23,14 +23,14 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: false,
+    required: true,
     unique: false,
     default: "",
     trim: true,
   },
   password: {
     type: String,
-    required: false,
+    required: true,
     default: "",
     trim: true,
   },
@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema({
     },
   ],
   families: [{ type: mongoose.Schema.Types.ObjectId, ref: "Family" }],
-  isAdmin: { type: Boolean, require: false },
+  isAdmin: { type: Boolean, require: true },
 });
 
 export const User = mongoose.model<IUser>("User", userSchema);

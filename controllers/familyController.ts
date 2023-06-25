@@ -55,8 +55,8 @@ export const getFamilyById = async (req: Request, res: Response) => {
     res.status(500).send("Server error");
   }
 };
-
 //$ Create a new family
+
 export const createFamily = async (req: Request, res: Response) => {
   const { familyName, familyInfo, passwordText, isAdmin, familyMembers } =
     req.body;
@@ -86,7 +86,7 @@ export const createFamily = async (req: Request, res: Response) => {
     res.json(family);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    return res.status(500).send("Server error");
   }
 };
 
