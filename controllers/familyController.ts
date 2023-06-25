@@ -90,7 +90,7 @@ export const getFamilyById = async (req: Request, res: Response) => {
   }
 };
 
-//$ Create a new family
+//$ Create a new family(see isAdmin thing it should be in the user)
 export const createFamily = async (req: Request, res: Response) => {
   const { familyName, familyInfo, passwordText, isAdmin, familyMembers } =
     req.body;
