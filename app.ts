@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
-import passport from "passport";
+
 import admin from "./utils/firebase/firebaseConfig"; // Update the import path to your Firebase Admin initialization file
 import familyRouter from "./routes/familyRoutes";
 import storeRouter from "./routes/storesRoutes";
@@ -22,7 +22,7 @@ if (admin.apps.length === 0) {
 }
 
 //*Auth
-app.use(passport.initialize());
+
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
