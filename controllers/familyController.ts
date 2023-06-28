@@ -1,3 +1,4 @@
+import { log } from "console";
 import { Request, Response } from "express";
 import admin from "firebase-admin";
 
@@ -23,7 +24,10 @@ export const getAllFamilies = async (
     const families: IFamily[] = [];
 
     snapshot.forEach((doc) => {
-      const family = doc.data() as IFamily;
+      const family = {
+        _id: doc.id, //? Add the _id property with the document ID(send the id back)
+        ...(doc.data() as IFamily),
+      };
       families.push(family);
     });
 
@@ -149,19 +153,15 @@ export const updateFamilyById = async (req: Request, res: Response) => {
     }
 
     // Extract user IDs from familyMembers array and filter out undefined values
-    const userIds = req.body.familyMembers
-      .map((member: any) => member.userId)
-      .filter((userId: string) => userId);
+    const existingUserIds = familyData.familyMembers || [];
+    const userIdsToAdd = req.body.familyMembers
+      .filter((member: any) => member && member !== "") // Filter out empty and undefined values
+      .map((userId: string) => userId)
+      .filter((userId: string) => !existingUserIds.includes(userId)); // Filter out already existing user IDs
 
-    // Add current user to family members if not already present
-    if (!userIds.includes(userId)) {
-      userIds.push(userId);
-      familyData.numberOfMembers = userIds.length;
-    }
-
-    familyData.familyMembers = userIds.map((userId: string) => ({
-      userId: userId,
-    }));
+    // Add new user IDs to existing family members
+    familyData.familyMembers = [...existingUserIds, ...userIdsToAdd];
+    familyData.numberOfMembers = familyData.familyMembers.length;
 
     await familyRef.set(familyData);
 

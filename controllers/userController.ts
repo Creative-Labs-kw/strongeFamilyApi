@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import admin from "firebase-admin";
 import { validationResult } from "express-validator";
+import { log } from "console";
 
 export interface User {
   userId: string;
@@ -44,10 +45,16 @@ export const getUserStores = async (
       .collection("stores")
       .where("owner", "==", userId)
       .get();
+
     const stores = [];
     storesSnapshot.forEach((doc) => {
-      stores.push(doc.data());
+      const storeData = {
+        storeId: doc.id,
+        ...doc.data(),
+      };
+      stores.push(storeData);
     });
+
     res.json(stores);
   } catch (err) {
     console.error(err);
@@ -90,6 +97,7 @@ export const getUserById = async (req: Request, res: Response) => {
     }
 
     const userData = userDoc.data();
+
     res.json(userData);
   } catch (err) {
     console.error(err.message);
@@ -99,7 +107,7 @@ export const getUserById = async (req: Request, res: Response) => {
 
 //$ Update a store owned by a user
 export const updateUserStoreById = async (
-  req: Request,
+  req,
   res: Response
 ): Promise<void> => {
   const { storeId } = req.params;
@@ -223,8 +231,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Example token generation using Firebase Admin SDK
     const token = await admin.auth().createCustomToken(userRecord.uid);
+    const userId = userRecord.uid;
 
-    res.json({ token });
+    res.json({ token, userId });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ errors: [{ msg: "Server error" }] });
