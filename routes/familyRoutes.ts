@@ -17,18 +17,18 @@ import {
 
 const familyRouter = Router();
 
-familyRouter.get("/", getAllFamilies);
-familyRouter.get("/members/:familyId", getAllFamilyMembers);
-familyRouter.get("/:familyId", getFamilyById);
-familyRouter.post("/", createFamily);
-familyRouter.put("/:familyId/:userId", updateFamilyById);
-familyRouter.delete("/:familyId", deleteFamilyById);
-familyRouter.delete("/", deleteAllFamilies);
+familyRouter.get("/getAllFamilies", getAllFamilies);
+familyRouter.get("/getAllFamilyMembers", getAllFamilyMembers);
+familyRouter.get("/getFamilyById", getFamilyById);
+familyRouter.post("/createFamily", createFamily);
+familyRouter.put("/updateFamilyById", updateFamilyById);
+familyRouter.delete("/deleteFamilyById", deleteFamilyById);
+familyRouter.delete("/deleteAllFamilies", deleteAllFamilies);
 
 // * Password
 familyRouter.post("/createPassword", createFamilyPassword);
-familyRouter.get("/:familyId/password", getFamilyPassword);
-familyRouter.put("/:familyId/updatePassword", updateFamilyPassword);
-familyRouter.delete("/:familyId/deletePassword", deleteFamilyPasswordById);
+familyRouter.get("/getFamilyPassword", getFamilyPassword);
+familyRouter.put("/updateFamilyPassword", updateFamilyPassword);
+familyRouter.delete("/deleteFamilyPasswordById", deleteFamilyPasswordById);
 
 export default familyRouter;

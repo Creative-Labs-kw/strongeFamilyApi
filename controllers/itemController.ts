@@ -12,7 +12,7 @@ export interface IItem {
 //$ GET all items for a specific store
 export const getAllItems = async (req: Request, res: Response) => {
   try {
-    const storeId = req.params.storeId;
+    const { storeId } = req.params;
     const snapshot = await admin
       .firestore()
       .collection("items")
@@ -39,7 +39,7 @@ export const getAllItems = async (req: Request, res: Response) => {
 
 //$ GET a specific item by ID
 export const getItemById = async (req: Request, res: Response) => {
-  const { itemId } = req.params;
+  const { itemId } = req.body;
   try {
     const doc = await admin.firestore().collection("items").doc(itemId).get();
 
@@ -65,7 +65,7 @@ export const getItemById = async (req: Request, res: Response) => {
 //$ CREATE a new item
 export const createItem = async (req: Request, res: Response) => {
   const { itemName, price, description } = req.body;
-  const { storeId } = req.params;
+  const { storeId } = req.body;
 
   try {
     const newItem: IItem = {
@@ -96,8 +96,8 @@ export const updateItemById = async (req: Request, res: Response) => {
   const { itemName, price, description, image } = req.body;
 
   try {
-    const itemId = req.params.itemId;
-    const storeId = req.params.storeId;
+    const { itemId } = req.body;
+    const { storeId } = req.body;
 
     const itemRef = admin.firestore().collection("items").doc(itemId);
     const itemDoc = await itemRef.get();
@@ -136,8 +136,8 @@ export const updateItemById = async (req: Request, res: Response) => {
 //$ DELETE an item by ID
 export const deleteItemById = async (req: Request, res: Response) => {
   try {
-    const itemId = req.params.itemId;
-    const storeId = req.params.storeId;
+    const { itemId } = req.body;
+    const { storeId } = req.body;
 
     await admin.firestore().collection("items").doc(itemId).delete();
 
@@ -156,7 +156,7 @@ export const deleteItemById = async (req: Request, res: Response) => {
 //$ DELETE all items for a specific store
 export const deleteAllItems = async (req: Request, res: Response) => {
   try {
-    const storeId = req.params.storeId;
+    const { storeId } = req.body;
 
     const snapshot = await admin
       .firestore()

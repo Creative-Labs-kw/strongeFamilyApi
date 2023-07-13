@@ -17,6 +17,7 @@ export interface Store {
 export const getAllStores = async (req: Request, res: Response) => {
   try {
     const snapshot = await admin.firestore().collection("stores").get();
+
     const stores: Store[] = [];
 
     snapshot.forEach((doc) => {
@@ -45,6 +46,7 @@ export const getAllStores = async (req: Request, res: Response) => {
 export const getFamilyStores = async (req: Request, res: Response) => {
   try {
     const { familyId } = req.params;
+    console.log(familyId);
 
     const familyDoc = await admin
       .firestore()
@@ -124,8 +126,7 @@ export const getStoreById = async (req: Request, res: Response) => {
 
 //$ Create a new store
 export const createStore = async (req: Request, res: Response) => {
-  const { storeName, address, phoneNumber, description } = req.body;
-  const { userId } = req.params;
+  const { storeName, address, phoneNumber, description, userId } = req.body;
 
   try {
     // Check if store already exists
@@ -177,12 +178,11 @@ export const updateStoreById = async (req: Request, res: Response) => {
     instagramLink,
     snapChatLink,
     webLink,
+    storeId,
+    userId,
   } = req.body;
 
   try {
-    const storeId = req.params.storeId;
-    const userId = req.params.userId;
-
     const storeRef = admin.firestore().collection("stores").doc(storeId);
     const storeDoc = await storeRef.get();
 
@@ -214,7 +214,7 @@ export const updateStoreById = async (req: Request, res: Response) => {
 
 //$ Delete a store
 export const deleteStoreById = async (req: Request, res: Response) => {
-  const { storeId } = req.params;
+  const { storeId } = req.body;
 
   try {
     const storeRef = admin.firestore().collection("stores").doc(storeId);

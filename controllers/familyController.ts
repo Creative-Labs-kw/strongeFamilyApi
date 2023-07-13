@@ -1,4 +1,3 @@
-import { log } from "console";
 import { Request, Response } from "express";
 import admin from "firebase-admin";
 
@@ -43,7 +42,7 @@ export const getAllFamilyMembers = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { familyId } = req.params;
+  const { familyId } = req.body;
 
   try {
     const familyDoc = await db.collection("families").doc(familyId).get();
@@ -78,7 +77,9 @@ export const getAllFamilyMembers = async (
 //$ Get family by ID
 export const getFamilyById = async (req: Request, res: Response) => {
   try {
-    const familyId = req.params.familyId;
+    const { familyId } = req.body;
+    console.log(familyId);
+
     const doc = await db.collection("families").doc(familyId).get();
 
     if (!doc.exists) {
@@ -131,8 +132,7 @@ export const createFamily = async (req: Request, res: Response) => {
 //$ Update family by ID
 export const updateFamilyById = async (req: Request, res: Response) => {
   try {
-    const userId = req.params.userId;
-    const familyId = req.params.familyId;
+    const { familyId } = req.body;
     const familyRef = db.collection("families").doc(familyId);
 
     const familySnapshot = await familyRef.get();
@@ -178,7 +178,7 @@ export const deleteFamilyById = async (
   res: Response<any, Record<string, any>>
 ): Promise<void> => {
   try {
-    const familyId = req.params.familyId;
+    const { familyId } = req.body;
     const familyRef = db.collection("families").doc(familyId);
 
     const familySnapshot = await familyRef.get();

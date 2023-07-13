@@ -24,3 +24,5 @@ logs/
 
 # file (created by macOS to store folder settings)
 .DS_Store
+
+/utils/firebase/firebase.json

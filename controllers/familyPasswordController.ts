@@ -30,7 +30,7 @@ export const createFamilyPassword = async (req: Request, res: Response) => {
 //$ Get family password by ID
 export const getFamilyPassword = async (req: Request, res: Response) => {
   try {
-    const familyId = req.params.familyId;
+    const { familyId } = req.body;
 
     const familyRef = db.collection("families").doc(familyId);
     const familyDoc = await familyRef.get();
@@ -50,11 +50,9 @@ export const getFamilyPassword = async (req: Request, res: Response) => {
 
 //$ Update family password by ID
 export const updateFamilyPassword = async (req: Request, res: Response) => {
-  const { passwordText } = req.body;
+  const { familyId, passwordText } = req.body;
 
   try {
-    const familyId = req.params.familyId;
-
     const familyRef = db.collection("families").doc(familyId);
     const familyDoc = await familyRef.get();
 
@@ -77,7 +75,7 @@ export const updateFamilyPassword = async (req: Request, res: Response) => {
 //$ Delete family password by ID
 export const deleteFamilyPasswordById = async (req: Request, res: Response) => {
   try {
-    const familyId = req.params.familyId;
+    const { familyId } = req.body;
 
     const familyRef = db.collection("families").doc(familyId);
     const familyDoc = await familyRef.get();

@@ -2,7 +2,6 @@
 import { Request, Response } from "express";
 import admin from "firebase-admin";
 import { validationResult } from "express-validator";
-import { log } from "console";
 
 export interface User {
   userId: string;
@@ -75,19 +74,22 @@ export const getAllUserFamilies = async (
       .collection("families")
       .where("familyMembers", "array-contains", userId)
       .get();
+
     const families: any[] = [];
     familiesSnapshot.forEach((doc) => {
       families.push(doc.data());
     });
+
     res.json(families);
   } catch (err) {
     res.status(500).send("Server error");
   }
 };
+
 // $ Get a user by id
 export const getUserById = async (req: Request, res: Response) => {
   try {
-    const userId = req.params.userId;
+    const { userId } = req.params;
     const userRef = admin.firestore().collection("users").doc(userId);
 
     const userDoc = await userRef.get();
@@ -110,7 +112,8 @@ export const updateUserStoreById = async (
   req,
   res: Response
 ): Promise<void> => {
-  const { storeId } = req.params;
+  const { storeId } = req.body;
+
   const {
     storeName,
     address,
@@ -151,8 +154,8 @@ export const updateUserStoreById = async (
 
 //$ Update a user by id
 export const updateUserById = async (req: Request, res: Response) => {
-  const { name, email, isAdmin, imageUrl } = req.body;
-  const userId = req.params.userId;
+  const { name, email, isAdmin, imageUrl, userId } = req.body;
+  // const userId = req.params.userId;
 
   try {
     await admin.auth().updateUser(userId, {
@@ -221,13 +224,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 // $ Login / SignIn a user
 export const login = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
+  const { email } = req.body;
 
   try {
     const userRecord = await admin.auth().getUserByEmail(email);
-    // Compare the provided password with the user's stored password hash
-    // You can use a library like bcrypt or argon2 for password hashing and comparison
-    // If the password is valid, generate a token or session to authenticate the user
 
     // Example token generation using Firebase Admin SDK
     const token = await admin.auth().createCustomToken(userRecord.uid);
@@ -243,7 +243,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 //$ Delete a user by ID
 export const deleteUserById = async (req: Request, res: Response) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.body.userId;
     const userRef = admin.firestore().collection("users").doc(userId);
 
     const userDoc = await userRef.get();

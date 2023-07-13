@@ -13,17 +13,17 @@ import {
   deleteAllUsers,
 } from "../controllers/userController";
 
-const router = Router();
+const UserRouter = Router();
 
-router.get("/", getAllUsers);
-router.get("/stores/:userId", getUserStores);
-router.get("/families/:userId", getAllUserFamilies);
-router.get("/:userId", getUserById);
-router.put("/store/:storeId", updateUserStoreById);
-router.put("/:userId", updateUserById);
-router.post("/register", register);
-router.post("/login", login);
-router.delete("/:userId", deleteUserById);
-router.delete("", deleteAllUsers);
+UserRouter.get("/getAllUsers", getAllUsers);
+UserRouter.get("/getUserStores/:userId", getUserStores);
+UserRouter.get("/getAllUserFamilies/:userId", getAllUserFamilies);
+UserRouter.get("/getUserById/:userId", getUserById);
+UserRouter.put("/updateUserStoreById", updateUserStoreById);
+UserRouter.put("/updateUserById", updateUserById);
+UserRouter.post("/register", register);
+UserRouter.post("/login", login);
+UserRouter.delete("/deleteUserById", deleteUserById);
+UserRouter.delete("/deleteAllUsers", deleteAllUsers);
 
-export default router;
+export default UserRouter;
