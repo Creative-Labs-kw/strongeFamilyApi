@@ -279,3 +279,26 @@ export const deleteAllUsers = async (req: Request, res: Response) => {
     res.status(500).send("Server error");
   }
 };
+
+// $ Get chat IDs for a user
+export const getUserChatIds = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { userId } = req.params;
+
+  try {
+    const userRef = admin.firestore().collection("users").doc(userId);
+    const chatsSnapshot = await userRef.collection("chats").get();
+
+    const chatIds = [];
+    chatsSnapshot.forEach((doc) => {
+      chatIds.push(doc.id);
+    });
+
+    res.json(chatIds);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
+  }
+};
