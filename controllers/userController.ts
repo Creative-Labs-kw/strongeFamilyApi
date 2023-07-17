@@ -1,58 +1,37 @@
+// userController.ts
 import { Request, Response } from "express";
+import admin from "firebase-admin";
 import { validationResult } from "express-validator";
-//* Auth:
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import config from "../config";
-//* Data:
-import logger from "../utils/logger";
-import { User, IUser } from "../models/User";
-import { Document } from "mongoose";
-import { JwtPayload } from "jsonwebtoken";
-import Store from "../models/Store";
-import Family from "../models/Family";
-interface IUserPayload {
-  user?: {
-    id: string;
-  };
-}
-export interface IRequest extends Request {
-  user?: IUser;
-}
-interface UserDocument extends Document<IUser> {
-  remove(): Promise<UserDocument>;
-  stores: string[]; // add stores property here
+
+export interface User {
+  userId: string;
+  uid: string;
+  name?: string;
+  email: string;
+  password: string;
+  imageUrl?: string;
+  stores: string[];
+  isAdmin?: boolean;
 }
 
-//* Get all users
+//$ Get all users
 export const getAllUsers = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const users = await User.find().populate("stores");
+    const usersSnapshot = await admin.firestore().collection("users").get();
+    const users = [];
+    usersSnapshot.forEach((doc) => {
+      users.push(doc.data());
+    });
     res.json(users);
   } catch (err) {
     res.status(500).send("Server error");
   }
 };
 
-//* Get Store By Owner:
-export const getStoresByOwnerId = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const { userId } = req.params;
-
-  try {
-    const stores = await Store.find({ owner: userId });
-    res.json(stores);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ errors: [{ msg: "Server error" }] });
-  }
-};
-//* Get user stores:
+//$ Get all stores owned by a user
 export const getUserStores = async (
   req: Request,
   res: Response
@@ -60,15 +39,29 @@ export const getUserStores = async (
   const { userId } = req.params;
 
   try {
-    const stores = await Store.find({ owner: userId });
-    res.status(200).json(stores);
-  } catch (error) {
-    console.log(error);
+    const storesSnapshot = await admin
+      .firestore()
+      .collection("stores")
+      .where("owner", "==", userId)
+      .get();
+
+    const stores = [];
+    storesSnapshot.forEach((doc) => {
+      const storeData = {
+        storeId: doc.id,
+        ...doc.data(),
+      };
+      stores.push(storeData);
+    });
+
+    res.json(stores);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
 
-//* Get user families:
+//$ Get the family that the user belongs to
 export const getAllUserFamilies = async (
   req: Request,
   res: Response
@@ -76,92 +69,114 @@ export const getAllUserFamilies = async (
   const { userId } = req.params;
 
   try {
-    const Families = await Family.find({ familyMembers: userId });
-    res.json(Families);
+    const familiesSnapshot = await admin
+      .firestore()
+      .collection("families")
+      .where("familyMembers", "array-contains", userId)
+      .get();
+
+    const families: any[] = [];
+    familiesSnapshot.forEach((doc) => {
+      families.push(doc.data());
+    });
+
+    res.json(families);
   } catch (err) {
     res.status(500).send("Server error");
   }
 };
 
-//* Update an user Store
-export const updateUserStoreById = async (
-  req: IRequest,
-  res: Response
-): Promise<void> => {
-  const { storeId } = req.params;
-  const { storeName, address, phoneNumber, imageUrl, description, links } =
-    req.body;
-
+// $ Get a user by id
+export const getUserById = async (req: Request, res: Response) => {
   try {
-    // Find user by id
-    const user = await User.findById(req.params.userId).populate("stores");
+    const { userId } = req.params;
+    const userRef = admin.firestore().collection("users").doc(userId);
 
-    if (!user) {
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
       res.status(404).json({ errors: [{ msg: "User not found" }] });
       return;
     }
 
-    // Find the store document by ID
-    const store = await Store.findById(storeId);
+    const userData = userDoc.data();
 
-    if (!store) {
+    res.json(userData);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+//$ Update a store owned by a user
+export const updateUserStoreById = async (
+  req,
+  res: Response
+): Promise<void> => {
+  const { storeId } = req.body;
+
+  const {
+    storeName,
+    address,
+    phoneNumber,
+    imageUrl,
+    description,
+    instagramLink,
+    snapChatLink,
+    webLink,
+  } = req.body;
+
+  try {
+    const storeRef = admin.firestore().collection("stores").doc(storeId);
+    const storeDoc = await storeRef.get();
+
+    if (!storeDoc.exists) {
       res.status(404).json({ errors: [{ msg: "Store not found" }] });
       return;
     }
 
-    // Update the store properties
-    store.storeName = storeName || store.storeName;
-    store.address = address || store.address;
-    store.phoneNumber = phoneNumber || store.phoneNumber;
-    store.imageUrl = imageUrl || store.imageUrl;
-    store.description = description || store.description;
-    store.links = links || store.links;
+    await storeRef.update({
+      storeName: storeName || storeDoc.data().storeName,
+      address: address || storeDoc.data().address,
+      phoneNumber: phoneNumber || storeDoc.data().phoneNumber,
+      imageUrl: imageUrl || storeDoc.data().imageUrl,
+      description: description || storeDoc.data().description,
+      instagramLink: instagramLink || storeDoc.data().instagramLink,
+      snapChatLink: snapChatLink || storeDoc.data().snapChatLink,
+      webLink: webLink || storeDoc.data().webLink,
+    });
 
-    // Save updated store to database
-    await store.save();
-
-    // Return updated user object
-    res.json(user);
+    res.json(req.user);
   } catch (err) {
     console.error(err);
     res.status(500).json({ errors: [{ msg: "Server error" }] });
-    return;
   }
 };
 
-//* Update an existing user
-export const updateUserById = async (
-  req: IRequest,
-  res: Response
-): Promise<void> => {
-  const { name, email, isAdmin } = req.body;
+//$ Update a user by id
+export const updateUserById = async (req: Request, res: Response) => {
+  const { name, email, isAdmin, imageUrl, userId } = req.body;
+  // const userId = req.params.userId;
 
   try {
-    // Find user by id
-    const user = await User.findById(req.params.userId);
-    if (!user) {
-      res.status(404).json({ errors: [{ msg: "User not found" }] });
-      return;
-    }
+    await admin.auth().updateUser(userId, {
+      displayName: name,
+      email: email,
+      photoURL: imageUrl,
+    });
 
-    // Update user fields if they are provided in the request body
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (isAdmin !== undefined) user.isAdmin = isAdmin;
+    const userRef = admin.firestore().collection("users").doc(userId);
 
-    // Save updated user to database
-    await user.save();
+    await userRef.update({ isAdmin: isAdmin });
 
-    // Return updated user object
-    res.json(user);
+    res.json({ msg: "User updated successfully" });
   } catch (err) {
+    console.error(err.message);
     res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
 
-//* Handle user registration
+// $ Register / SignUp  a user
 export const register = async (req: Request, res: Response): Promise<void> => {
-  // Check for validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(422).json({ errors: errors.array() });
@@ -171,145 +186,119 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   const { name, email, password } = req.body;
 
   try {
-    // Check if user already exists
-    let user: IUser | null = await User.findOne({ email });
-    if (user) {
+    const userSnapshot = await admin
+      .firestore()
+      .collection("users")
+      .where("email", "==", email)
+      .get();
+
+    if (!userSnapshot.empty) {
       res.status(400).json({ errors: [{ msg: "User already exists" }] });
       return;
     }
 
-    // Create new user
-    user = new User({
+    const userRecord = await admin.auth().createUser({
+      displayName: name,
+      email: email,
+      password: password,
+    });
+
+    const { uid } = userRecord;
+
+    const newUser = {
+      id: uid,
       name,
       email,
-      password,
-    });
-
-    // Encrypt password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
-    // Save user to database
-    await user.save();
-
-    // Create JWT token
-    const payload: IUserPayload = {
-      user: {
-        id: user.id,
-      },
     };
 
-    const token = jwt.sign(payload, config.jwt.secret!, {
-      expiresIn: config.jwt.expiration,
-    });
+    await admin.firestore().collection("users").doc(uid).set(newUser);
 
-    res.status(201).json({ token, user });
+    const token = await admin.auth().createCustomToken(uid);
+
+    res.json({ token });
   } catch (err) {
-    res.status(500).send("Server error");
+    console.error("Registration error:", err);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
 
-//* Handle user login
-export const login = async (req: Request, res: Response) => {
-  // Log the request
-  logger.UserLogger.info(`Login request: ${JSON.stringify(req.body)}`);
-
-  // Check for validation errors
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(422).json({ errors: errors.array() });
-    return;
-  }
-
-  const { email, password } = req.body;
+// $ Login / SignIn a user
+export const login = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
 
   try {
-    // Check if user exists
-    const user = await User.findOne({ email });
-    if (!user) {
-      // Log the error
-      logger.UserLogger.error(`Invalid credentials: email ${email}`);
-      return res.status(400).json({ errors: [{ msg: "Invalid credentials" }] });
-    }
+    const userRecord = await admin.auth().getUserByEmail(email);
 
-    // Check if password is correct
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      // Log the error
-      logger.UserLogger.error(`Invalid credentials: email ${email}`);
-      return res.status(400).json({ errors: [{ msg: "Invalid credentials" }] });
-    }
+    // Example token generation using Firebase Admin SDK
+    const token = await admin.auth().createCustomToken(userRecord.uid);
+    const userId = userRecord.uid;
 
-    // Create JWT token
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
-
-    jwt.sign(
-      payload,
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiration },
-      (err: Error | null, token?: string) => {
-        if (err) {
-          // Log the error
-          logger.UserLogger.error(`JWT sign error: ${err.message}`);
-          throw err;
-        }
-        // Log the successful login
-        logger.UserLogger.info(`User ${email} successfully logged in`);
-        res.json({ token, userId: user.id });
-      }
-    );
+    res.json({ token, userId });
   } catch (err) {
-    // Log the error
-    logger.UserLogger.error(`Server error: ${err.message}`);
-    res.status(500).send("Server error");
+    console.error("Login error:", err);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
 
-//* Get user by ID
-export const getUserById = async (req: Request, res: Response) => {
-  try {
-    const user = await User.findById(req.params.userId);
-
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
-
-    res.json(user);
-  } catch (err) {
-    res.status(500).send("Server error");
-  }
-};
-
-//* Delete a user
+//$ Delete a user by ID
 export const deleteUserById = async (req: Request, res: Response) => {
   try {
-    // Find user by id
-    let user: UserDocument | null = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({ errors: [{ msg: "User not found" }] });
+    const userId = req.body.userId;
+    const userRef = admin.firestore().collection("users").doc(userId);
+
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      res.status(404).json({ errors: [{ msg: "User not found" }] });
+      return;
     }
 
-    // Delete user from database
-    await user.deleteOne();
+    await userRef.delete();
 
-    // Return success message
     res.json({ msg: "User deleted" });
   } catch (err) {
+    console.error(err.message);
     res.status(500).send("Server error");
   }
 };
 
-//* Delete all users:
+//$ Delete all users
 export const deleteAllUsers = async (req: Request, res: Response) => {
   try {
-    // Delete all users from database
-    await User.deleteMany({});
+    const snapshot = await admin.firestore().collection("users").get();
+    const batch = admin.firestore().batch();
+
+    snapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
     res.json({ msg: "All users deleted" });
   } catch (err) {
+    console.error(err.message);
     res.status(500).send("Server error");
+  }
+};
+
+// $ Get chat IDs for a user
+export const getUserChatIds = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { userId } = req.params;
+
+  try {
+    const userRef = admin.firestore().collection("users").doc(userId);
+    const chatsSnapshot = await userRef.collection("chats").get();
+
+    const chatIds = [];
+    chatsSnapshot.forEach((doc) => {
+      chatIds.push(doc.id);
+    });
+
+    res.json(chatIds);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };

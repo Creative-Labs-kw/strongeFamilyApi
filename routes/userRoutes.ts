@@ -1,29 +1,31 @@
+// userRoutes.ts
 import { Router } from "express";
 import {
-  deleteAllUsers,
-  deleteUserById,
-  getAllUserFamilies,
   getAllUsers,
-  getUserById,
   getUserStores,
-  login,
-  register,
-  updateUserById,
+  getAllUserFamilies,
   updateUserStoreById,
+  updateUserById,
+  register,
+  login,
+  getUserById,
+  deleteUserById,
+  deleteAllUsers,
+  getUserChatIds,
 } from "../controllers/userController";
-import { authMiddleware } from "../middleware/passport";
 
-const userRouter = Router();
+const UserRouter = Router();
 
-userRouter.get("/", getAllUsers);
-userRouter.get("/:userId/families", getAllUserFamilies); //$ get all user families
-userRouter.get("/:userId", getUserById);
-userRouter.get("/:userId/stores", getUserStores); //$ get all user stores
-userRouter.post("/login", login); //$ SignIn
-userRouter.post("/register", register); //$ SignUp
-userRouter.put("/:userId", updateUserById);
-userRouter.put("/:userId/stores/:storeId", authMiddleware, updateUserStoreById);
-userRouter.delete("/:userId", deleteUserById);
-userRouter.delete("/", deleteAllUsers);
+UserRouter.get("/getAllUsers", getAllUsers);
+UserRouter.get("/getUserStores/:userId", getUserStores); //stores
+UserRouter.get("/getAllUserFamilies/:userId", getAllUserFamilies); //families
+UserRouter.get("/getUserById/:userId", getUserById);
+UserRouter.get("/getUserChatIds/:userId", getUserChatIds); //chats
+UserRouter.put("/updateUserStoreById", updateUserStoreById);
+UserRouter.put("/updateUserById", updateUserById);
+UserRouter.post("/register", register);
+UserRouter.post("/login", login);
+UserRouter.delete("/deleteUserById", deleteUserById);
+UserRouter.delete("/deleteAllUsers", deleteAllUsers);
 
-export default userRouter;
+export default UserRouter;

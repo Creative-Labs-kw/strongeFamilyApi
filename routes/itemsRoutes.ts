@@ -10,11 +10,11 @@ import {
 
 const itemsRouter = Router();
 
-itemsRouter.get("/:storeId", getAllItems);
-itemsRouter.get("/:storeId/:itemId", getItemById);
-itemsRouter.post("/:storeId/createItems", createItem);
-itemsRouter.put("/:storeId/:itemId", updateItemById);
-itemsRouter.delete("/:storeId/:itemId", deleteItemById);
-itemsRouter.delete("/:storeId", deleteAllItems);
+itemsRouter.get("/getAllItems/:storeId", getAllItems);
+itemsRouter.get("/getItemById", getItemById);
+itemsRouter.post("/createItem", createItem);
+itemsRouter.put("/updateItemById", updateItemById);
+itemsRouter.delete("/deleteItemById", deleteItemById);
+itemsRouter.delete("/deleteAllItems", deleteAllItems);
 
 export default itemsRouter;
