@@ -1,23 +1,15 @@
 import { Request, Response } from "express";
-import admin from "firebase-admin";
-
-const db = admin.firestore();
+import FamilyPassword from "../models/FamilyPassword";
 
 //$ Create a family password
 export const createFamilyPassword = async (req: Request, res: Response) => {
-  const { familyId, passwordText } = req.body;
+  const { passwordText } = req.body;
+  const { familyId } = req.params;
 
   try {
-    const familyRef = db.collection("families").doc(familyId);
-    const familyDoc = await familyRef.get();
-
-    if (!familyDoc.exists) {
-      return res.status(404).json({ msg: "Family not found" });
-    }
-
-    //? Update family password
-    await familyRef.update({
-      passwordText: passwordText,
+    const familyPassword = await FamilyPassword.create({
+      familyId,
+      passwordText,
     });
 
     res.json({ msg: "Family password created successfully" });
@@ -30,18 +22,14 @@ export const createFamilyPassword = async (req: Request, res: Response) => {
 //$ Get family password by ID
 export const getFamilyPassword = async (req: Request, res: Response) => {
   try {
-    const { familyId } = req.body;
+    const { familyId } = req.params;
 
-    const familyRef = db.collection("families").doc(familyId);
-    const familyDoc = await familyRef.get();
-
-    if (!familyDoc.exists) {
-      return res.status(404).json({ msg: "Family not found" });
+    const familyPassword = await FamilyPassword.findOne({ familyId });
+    if (!familyPassword) {
+      return res.status(404).json({ msg: "Family password not found" });
     }
 
-    const passwordText = familyDoc.data()?.passwordText;
-
-    res.json({ passwordText });
+    res.json({ passwordText: familyPassword.passwordText });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -50,22 +38,19 @@ export const getFamilyPassword = async (req: Request, res: Response) => {
 
 //$ Update family password by ID
 export const updateFamilyPassword = async (req: Request, res: Response) => {
-  const { familyId, passwordText } = req.body;
+  const { passwordText } = req.body;
+  const { familyId } = req.params;
 
   try {
-    const familyRef = db.collection("families").doc(familyId);
-    const familyDoc = await familyRef.get();
-
-    if (!familyDoc.exists) {
-      return res.status(404).json({ msg: "Family not found" });
+    const familyPassword = await FamilyPassword.findOne({ familyId });
+    if (!familyPassword) {
+      return res.status(404).json({ msg: "Family password not found" });
     }
 
-    //$ Update family password
-    await familyRef.update({
-      passwordText: passwordText,
-    });
+    familyPassword.passwordText = passwordText;
+    await familyPassword.save();
 
-    res.json({ msg: "Family passwordText updated successfully" });
+    res.json({ msg: "Family password updated successfully" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -75,21 +60,16 @@ export const updateFamilyPassword = async (req: Request, res: Response) => {
 //$ Delete family password by ID
 export const deleteFamilyPasswordById = async (req: Request, res: Response) => {
   try {
-    const { familyId } = req.body;
+    const { familyId } = req.params;
 
-    const familyRef = db.collection("families").doc(familyId);
-    const familyDoc = await familyRef.get();
-
-    if (!familyDoc.exists) {
-      return res.status(404).json({ msg: "Family not found" });
+    const familyPassword = await FamilyPassword.findOne({ familyId });
+    if (!familyPassword) {
+      return res.status(404).json({ msg: "Family password not found" });
     }
 
-    //$ Delete family password
-    await familyRef.update({
-      passwordText: admin.firestore.FieldValue.delete(),
-    });
+    await FamilyPassword.deleteOne({ familyId });
 
-    res.json({ msg: "Family passwordText deleted successfully" });
+    res.json({ msg: "Family password deleted successfully" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
