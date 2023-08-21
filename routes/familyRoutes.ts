@@ -14,21 +14,58 @@ import {
   getFamilyPassword,
   updateFamilyPassword,
 } from "../controllers/familyPasswordController";
+import authMiddleware from "../middleware/authMiddleware";
 
 const familyRouter = Router();
 
-familyRouter.get("/getAllFamilies", getAllFamilies);
-familyRouter.get("/getAllFamilyMembers", getAllFamilyMembers);
-familyRouter.get("/getFamilyById", getFamilyById);
-familyRouter.post("/createFamily", createFamily);
-familyRouter.put("/updateFamilyById", updateFamilyById);
-familyRouter.delete("/deleteFamilyById", deleteFamilyById);
-familyRouter.delete("/deleteAllFamilies", deleteAllFamilies);
+//? GET's(READ)
+familyRouter.get("/getAllFamilies", authMiddleware, getAllFamilies);
+familyRouter.get("/getFamilyById/:familyId", getFamilyById);
+familyRouter.get(
+  "/getAllFamilyMembers/:familyId",
+  authMiddleware,
+  getAllFamilyMembers
+);
+//? POST(CREATE)
+familyRouter.post("/createFamily/:userId", authMiddleware, createFamily);
+//? PUT(UPDATE)
+familyRouter.put(
+  "/updateFamilyById/:familyId",
+  authMiddleware,
+  updateFamilyById
+);
+//? DELETE
+familyRouter.delete(
+  "/deleteFamilyById/:familyId",
+  authMiddleware,
+  deleteFamilyById
+);
+familyRouter.delete("/deleteAllFamilies", authMiddleware, deleteAllFamilies);
 
-// * Password
-familyRouter.post("/createPassword", createFamilyPassword);
-familyRouter.get("/getFamilyPassword", getFamilyPassword);
-familyRouter.put("/updateFamilyPassword", updateFamilyPassword);
-familyRouter.delete("/deleteFamilyPasswordById", deleteFamilyPasswordById);
+// * FAMILY PASSWORD's:
+//? GET's(READ)
+familyRouter.get(
+  "/getFamilyPassword/:familyId",
+  authMiddleware,
+  getFamilyPassword
+);
+//? POST(CREATE)
+familyRouter.post(
+  "/createPassword/:familyId",
+  authMiddleware,
+  createFamilyPassword
+);
+//? PUT(UPDATE)
+familyRouter.put(
+  "/updateFamilyPassword/:familyId",
+  authMiddleware,
+  updateFamilyPassword
+);
+//? DELETE
+familyRouter.delete(
+  "/deleteFamilyPasswordById/:familyId",
+  authMiddleware,
+  deleteFamilyPasswordById
+);
 
 export default familyRouter;

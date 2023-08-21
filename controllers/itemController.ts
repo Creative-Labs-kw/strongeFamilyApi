@@ -1,34 +1,12 @@
 import { Request, Response } from "express";
-import * as admin from "firebase-admin";
-
-export interface IItem {
-  itemName: string;
-  price: number;
-  image?: string;
-  description: string;
-  store: string; // reference to the Store ID
-}
+import Store, { IStore } from "../models/Store";
+import Item from "../models/Item";
 
 //$ GET all items for a specific store
 export const getAllItems = async (req: Request, res: Response) => {
   try {
     const { storeId } = req.params;
-    const snapshot = await admin
-      .firestore()
-      .collection("items")
-      .where("store", "==", storeId)
-      .get();
-
-    const items: IItem[] = [];
-    snapshot.forEach((doc) => {
-      items.push({
-        itemName: doc.data().itemName,
-        price: doc.data().price,
-        image: doc.data().image,
-        description: doc.data().description,
-        store: doc.data().store,
-      });
-    });
+    const items = await Item.find({ store: storeId });
 
     res.json(items);
   } catch (err) {
@@ -39,21 +17,13 @@ export const getAllItems = async (req: Request, res: Response) => {
 
 //$ GET a specific item by ID
 export const getItemById = async (req: Request, res: Response) => {
-  const { itemId } = req.body;
+  const { itemId } = req.params;
   try {
-    const doc = await admin.firestore().collection("items").doc(itemId).get();
+    const item = await Item.findById(itemId);
 
-    if (!doc.exists) {
+    if (!item) {
       return res.status(404).json({ msg: "Item not found" });
     }
-
-    const item: IItem = {
-      itemName: doc.data().itemName,
-      price: doc.data().price,
-      image: doc.data().image,
-      description: doc.data().description,
-      store: doc.data().store,
-    };
 
     res.json(item);
   } catch (err) {
@@ -65,26 +35,23 @@ export const getItemById = async (req: Request, res: Response) => {
 //$ CREATE a new item
 export const createItem = async (req: Request, res: Response) => {
   const { itemName, price, description } = req.body;
-  const { storeId } = req.body;
+  const { storeId } = req.params;
 
   try {
-    const newItem: IItem = {
+    const newItem = await Item.create({
       itemName,
       price,
       description,
       store: storeId,
-    };
-
-    const docRef = await admin.firestore().collection("items").add(newItem);
-
-    newItem.store = storeId; // Assign the store ID instead of the Store model
-
-    const storeRef = await admin.firestore().collection("stores").doc(storeId);
-    await storeRef.update({
-      items: admin.firestore.FieldValue.arrayUnion(docRef.id),
     });
 
-    res.json({ id: docRef.id, ...newItem });
+    const storeRef = (await Store.findById(storeId)) as IStore;
+    if (storeRef) {
+      storeRef.items.push(newItem._id);
+      await storeRef.save();
+    }
+
+    res.json(newItem);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
@@ -96,35 +63,22 @@ export const updateItemById = async (req: Request, res: Response) => {
   const { itemName, price, description, image } = req.body;
 
   try {
-    const { itemId } = req.body;
-    const { storeId } = req.body;
+    const { itemId } = req.params;
 
-    const itemRef = admin.firestore().collection("items").doc(itemId);
-    const itemDoc = await itemRef.get();
-
-    if (!itemDoc.exists) {
+    const item = await Item.findById(itemId);
+    if (!item) {
       return res.status(404).json({ msg: "Item not found" });
     }
 
-    const updatedItem: Partial<IItem> = {
-      itemName: itemName || itemDoc.data()?.itemName,
-      price: price || itemDoc.data()?.price,
-      description: description || itemDoc.data()?.description,
-      store: storeId,
-    };
+    item.itemName = itemName || item.itemName;
+    item.price = price || item.price;
+    item.description = description || item.description;
 
     if (image) {
-      updatedItem.image = image;
+      item.image = image;
     }
 
-    //? Remove undefined properties from updatedItem
-    Object.keys(updatedItem).forEach((key) => {
-      if (updatedItem[key] === undefined) {
-        delete updatedItem[key];
-      }
-    });
-
-    await itemRef.update(updatedItem);
+    await item.save();
 
     res.json({ msg: "Item updated successfully" });
   } catch (err) {
@@ -136,15 +90,15 @@ export const updateItemById = async (req: Request, res: Response) => {
 //$ DELETE an item by ID
 export const deleteItemById = async (req: Request, res: Response) => {
   try {
-    const { itemId } = req.body;
-    const { storeId } = req.body;
+    const { storeId, itemId } = req.params;
 
-    await admin.firestore().collection("items").doc(itemId).delete();
+    await Item.findByIdAndDelete(itemId);
 
-    const storeRef = admin.firestore().collection("stores").doc(storeId);
-    await storeRef.update({
-      items: admin.firestore.FieldValue.arrayRemove(itemId),
-    });
+    const storeRef = (await Store.findById(storeId)) as IStore;
+    if (storeRef) {
+      storeRef.items = storeRef.items.filter((id) => id.toString() !== itemId);
+      await storeRef.save();
+    }
 
     res.json({ msg: "Item removed" });
   } catch (err) {
@@ -156,23 +110,15 @@ export const deleteItemById = async (req: Request, res: Response) => {
 //$ DELETE all items for a specific store
 export const deleteAllItems = async (req: Request, res: Response) => {
   try {
-    const { storeId } = req.body;
+    const { storeId } = req.params;
 
-    const snapshot = await admin
-      .firestore()
-      .collection("items")
-      .where("store", "==", storeId)
-      .get();
+    await Item.deleteMany({ store: storeId });
 
-    const batch = admin.firestore().batch();
-    snapshot.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-
-    const storeRef = admin.firestore().collection("stores").doc(storeId);
-    await storeRef.update({ items: [] });
+    const storeRef = (await Store.findById(storeId)) as IStore;
+    if (storeRef) {
+      storeRef.items = [];
+      await storeRef.save();
+    }
 
     res.json({ msg: "All items removed" });
   } catch (err) {
