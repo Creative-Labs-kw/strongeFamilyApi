@@ -7,7 +7,8 @@ export interface IUser extends Document {
   imageUrl?: string;
   stores: string[];
   isAdmin?: boolean;
-  chats: mongoose.Types.ObjectId[]; // Change to ObjectId[]
+  chats: mongoose.Types.ObjectId[];
+  token?: string; // Add the token field here
 }
 
 const userSchema: Schema = new Schema({
@@ -18,6 +19,7 @@ const userSchema: Schema = new Schema({
   stores: [{ type: mongoose.Schema.Types.ObjectId, ref: "Store" }],
   isAdmin: { type: Boolean, default: false },
   chats: [{ type: mongoose.Schema.Types.ObjectId, ref: "Chat" }],
+  token: { type: String }, // Define the token field here
 });
 
 export default mongoose.model<IUser>("User", userSchema);

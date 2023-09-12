@@ -7,32 +7,36 @@ import {
   updateUserById,
   register,
   login,
-  getUserById,
   deleteUserById,
   deleteAllUsers,
   getUserChatIds,
+  getUserByToken,
 } from "../controllers/userController";
 import authMiddleware from "../middleware/authMiddleware";
 
-const UserRouter = Router();
+const userRouter = Router();
 
-//? TO Apply authMiddleware to all routes defined below
-// UserRouter.use(authMiddleware);
+// GET's(READ)
+userRouter.get("/getAllUsers", getAllUsers);
+userRouter.get("/getUserStores/:userId", authMiddleware, getUserStores);
+userRouter.get(
+  "/getAllUserFamilies/:userId",
+  authMiddleware,
+  getAllUserFamilies
+);
+userRouter.get("/getUserByToken", authMiddleware, getUserByToken);
+userRouter.get("/getUserChatIds/:userId", authMiddleware, getUserChatIds);
 
-//? GET's(READ)
-UserRouter.get("/getAllUsers", authMiddleware, getAllUsers);
-UserRouter.get("/getUserStores/:userId", getUserStores);
-UserRouter.get("/getAllUserFamilies/:userId", getAllUserFamilies);
-UserRouter.get("/getUserById/:userId", getUserById);
-UserRouter.get("/getUserChatIds/:userId", getUserChatIds);
-//? POST(CREATE)
-UserRouter.post("/register", register);
-UserRouter.post("/login", authMiddleware, login);
-//? PUT(UPDATE)
-UserRouter.put("/updateUserStoreById", authMiddleware, updateUserStoreById);
-UserRouter.put("/updateUserById", authMiddleware, updateUserById);
-//? DELETE
-UserRouter.delete("/deleteUserById", authMiddleware, deleteUserById);
-UserRouter.delete("/deleteAllUsers", deleteAllUsers);
+// POST(CREATE)
+userRouter.post("/register", register);
+userRouter.post("/login", login);
 
-export default UserRouter;
+// PUT(UPDATE)
+userRouter.put("/updateUserStoreById", authMiddleware, updateUserStoreById);
+userRouter.put("/updateUserById", authMiddleware, updateUserById);
+
+// DELETE
+userRouter.delete("/deleteUserById", authMiddleware, deleteUserById);
+userRouter.delete("/deleteAllUsers", authMiddleware, deleteAllUsers);
+
+export default userRouter;

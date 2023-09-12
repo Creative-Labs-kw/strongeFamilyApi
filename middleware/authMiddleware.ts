@@ -1,29 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-
-dotenv.config();
+import passport from "./passportConfig";
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const token = req.header("Authorization");
-
-    if (!token) {
-      return res.status(401).json({ message: "Authorization token missing" });
+  passport.authenticate("jwt", { session: false }, (err, user, info) => {
+    if (err) {
+      console.log("Middleware error:", err.message);
+      return res.status(500).json({ message: "Internal server error" });
     }
-
-    const decoded = jwt.verify(
-      token.replace("Bearer ", ""),
-      process.env.JWT_SECRET
-    );
-
-    req.user = decoded;
-
+    if (!user) {
+      console.log("Middleware: No user found");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    req.user = user;
     next();
-  } catch (error) {
-    console.error("Error in authMiddleware:", error);
-    return res.status(403).json({ message: "Invalid token" });
-  }
+  })(req, res, next);
 };
 
 export default authMiddleware;
