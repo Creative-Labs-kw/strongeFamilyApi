@@ -1,32 +1,30 @@
 import express from "express";
-import cors from "cors";
-import bodyParser from "body-parser";
+import passport from "passport";
+import userRouter from "./routes/userRoutes";
 import familyRouter from "./routes/familyRoutes";
 import storeRouter from "./routes/storesRoutes";
-import userRouter from "./routes/userRoutes";
 import itemsRouter from "./routes/itemsRoutes";
 import notificationsRouter from "./routes/notificationsRoutes";
 import cartRouter from "./routes/cartRoutes";
 import chatRouter from "./routes/chatRoutes";
-import connectToDatabase from "./utils/mongoose"; // Import your Mongoose connection function
+import connectToDatabase from "./utils/mongoose";
 import dotenv from "dotenv";
 
 dotenv.config();
 const isTestEnvironment = process.env.NODE_ENV === "test";
 export const port = isTestEnvironment ? 3001 : 3000;
 
+const cors = require("cors");
 export const app = express();
+app.use(cors());
 
-// Connect to MongoDB
 connectToDatabase();
 
-app.use(cors());
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(passport.initialize()); // Initialize Passport
 
-//* Routers
-app.use("/users", userRouter);
+app.use(express.json());
+
+app.use("/users", userRouter); // Apply userRouter with authMiddleware
 app.use("/families", familyRouter);
 app.use("/stores", storeRouter);
 app.use("/items", itemsRouter);

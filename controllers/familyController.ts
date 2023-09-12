@@ -57,8 +57,10 @@ export const getAllFamilyMembers = async (
 export const createFamily = async (req: Request, res: Response) => {
   const { familyName, familyInfo, passwordText, isAdmin, familyMembers } =
     req.body;
+  console.log(req.body);
 
   const creatorUserId = req.params; //userId
+  console.log(creatorUserId);
 
   try {
     const updatedFamilyMembers = [...familyMembers, creatorUserId]; //? Add creator's userId

@@ -5,21 +5,26 @@ import Store from "../models/Store";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import { calculateTokenExpiration } from "../utils/deviceTimeZone";
+import { getToken } from "../utils/getToken"; // Import the getToken function
+import { ObjectId } from "mongodb";
 
 dotenv.config();
 
-//$ Get all users
-export const getAllUsers = async (res: Response): Promise<void> => {
+// Get all users
+export const getAllUsers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const users = await User.find();
+
     res.json(users);
   } catch (err) {
     res.status(500).send("Server error");
   }
 };
 
-//$ Get all stores owned by a user
+// Get all stores owned by a user
 export const getUserStores = async (
   req: Request,
   res: Response
@@ -28,19 +33,21 @@ export const getUserStores = async (
 
   try {
     const user = await User.findById(userId).populate("stores");
+    const userToken = await getToken(userId);
+
     if (!user) {
       res.status(404).json({ errors: [{ msg: "User not found" }] });
       return;
     }
 
-    res.json(user.stores);
+    res.json({ stores: user.stores, token: userToken });
   } catch (err) {
     console.error(err);
     res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
 
-//$ Get the family that the user belongs to
+// Get the family that the user belongs to
 export const getAllUserFamilies = async (
   req: Request,
   res: Response
@@ -49,20 +56,29 @@ export const getAllUserFamilies = async (
 
   try {
     const families = await Family.find({ familyMembers: userId });
-    res.json(families);
+    const userToken = await getToken(userId);
+
+    res.json({ families, token: userToken });
   } catch (err) {
     res.status(500).send("Server error");
   }
 };
 
-//$ Get a user by id
-export const getUserById = async (
+// getUserByToken
+export const getUserByToken = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    res.status(401).json({ errors: [{ msg: "No token provided" }] });
+    return;
+  }
+
   try {
-    const { userId } = req.params;
-    const user = await User.findById(userId);
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(new ObjectId(decoded.userId));
 
     if (!user) {
       res.status(404).json({ errors: [{ msg: "User not found" }] });
@@ -71,12 +87,17 @@ export const getUserById = async (
 
     res.json(user);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
+    console.error("Error in getUserByToken:", err);
+
+    if (err.name === "JsonWebTokenError") {
+      res.status(401).json({ errors: [{ msg: "Invalid token" }] });
+    } else {
+      res.status(500).send("Server error");
+    }
   }
 };
 
-//$ Get chat IDs for a user
+// Get chat IDs for a user
 export const getUserChatIds = async (
   req: Request,
   res: Response
@@ -85,26 +106,29 @@ export const getUserChatIds = async (
 
   try {
     const user = await User.findById(userId).populate("chats", "_id");
+    const userToken = await getToken(userId);
+
     if (!user) {
       res.status(404).json({ errors: [{ msg: "User not found" }] });
       return;
     }
 
     const chatIds: string[] = user.chats.map((chat) => chat._id.toString());
-    res.json(chatIds);
+    res.json({ chatIds, token: userToken });
   } catch (err) {
     console.error(err);
     res.status(500).json({ errors: [{ msg: "Server error" }] });
   }
 };
 
-//$ Register a new user
+// Register a new user
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password } = req.body;
 
     // Check if user with the given email already exists
     const existingUser = await User.findOne({ email });
+
     if (existingUser) {
       res.status(400).json({ msg: "User already exists" });
       return;
@@ -123,11 +147,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     await newUser.save();
 
     // Create and send JWT token using environment variables
-    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+    // Using email as the payload for this example
+    const token = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRATION,
     });
 
-    res.json({ token, user: newUser });
+    res.json({ token }); // Only sending the token back
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ errors: [{ msg: "Server error" }] });
@@ -137,9 +162,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 // Log in a user
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, localDeviceTime } = req.body;
+    const { email, password } = req.body;
 
     const user = await User.findOne({ email });
+
     if (!user) {
       res.status(400).json({ msg: "Invalid credentials" });
       return;
@@ -151,17 +177,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Inside your login logic
-    const jwtExpirationInSeconds = parseInt(process.env.JWT_EXPIRATION, 10); // Read JWT expiration from env
+    const jwtExpirationInSeconds = parseInt(process.env.JWT_EXPIRATION, 10);
 
-    const expiresIn = calculateTokenExpiration({
-      localTime: localDeviceTime,
-      jwtExpirationInSeconds,
-    });
-
-    // Create and send JWT token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn, // Set token expiration time
+      expiresIn: jwtExpirationInSeconds,
     });
 
     res.json({ token, user });
@@ -171,7 +190,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-//$ Update a store owned by a user
+// Update a store owned by a user
 export const updateUserStoreById = async (
   req: Request,
   res: Response
@@ -196,7 +215,7 @@ export const updateUserStoreById = async (
   }
 };
 
-//$ Update a user by id
+// Update a user by id
 export const updateUserById = async (
   req: Request,
   res: Response
@@ -218,7 +237,7 @@ export const updateUserById = async (
   }
 };
 
-//$ Delete a user by ID
+// Delete a user by ID
 export const deleteUserById = async (
   req: Request,
   res: Response
@@ -232,7 +251,7 @@ export const deleteUserById = async (
       return;
     }
 
-    await User.findByIdAndDelete(userId); // Corrected line
+    await User.findByIdAndDelete(userId);
 
     res.json({ msg: "User deleted successfully" });
   } catch (err) {
@@ -241,7 +260,7 @@ export const deleteUserById = async (
   }
 };
 
-//$ Delete all users
+// Delete all users
 export const deleteAllUsers = async (
   req: Request,
   res: Response
