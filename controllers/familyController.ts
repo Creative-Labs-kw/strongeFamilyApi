@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Family from "../models/Family";
+import jwt from "jsonwebtoken";
 
 //$ Get/Fetch all families
 export const getAllFamilies = async (
@@ -55,27 +56,38 @@ export const getAllFamilyMembers = async (
 
 //$ Create a new family
 export const createFamily = async (req: Request, res: Response) => {
-  const { familyName, familyInfo, passwordText, isAdmin, familyMembers } =
+  const secretKey = process.env.JWT_SECRET;
+  const { familyName, passwordText, extraInfo, isAdmin, familyMembers } =
     req.body;
-  console.log(req.body);
 
-  const creatorUserId = req.params; //userId
-  console.log(creatorUserId);
+  // Assuming creatorUserId is sent in the request body
+  const creatorUserId = req.body.creatorUserId;
 
   try {
-    const updatedFamilyMembers = [...familyMembers, creatorUserId]; //? Add creator's userId
+    const updatedFamilyMembers = [...familyMembers, creatorUserId];
 
     const family = await Family.create({
       familyName,
-      familyInfo,
+      extraInfo,
       passwordText,
       isAdmin,
       familyMembers: updatedFamilyMembers,
       numberOfMembers: updatedFamilyMembers.length,
       notifications: [],
     });
+    console.log("familyName:", familyName);
 
-    res.json(family);
+    console.log("passwordText:", passwordText);
+    console.log("extraInfo:", extraInfo);
+    console.log("isAdmin:", isAdmin);
+    console.log("familyMembers:", familyMembers);
+    console.log("creatorUserId:", creatorUserId);
+    // Generate a token for the creator user
+    const token = jwt.sign({ familyId: family._id }, secretKey, {
+      expiresIn: "10h",
+    });
+
+    res.json({ token, family });
   } catch (err) {
     console.error(err.message);
     return res.status(500).send("Server error");
@@ -99,7 +111,7 @@ export const updateFamilyById = async (req: Request, res: Response) => {
     }
     // Update family info
     if (req.body.familyInfo) {
-      family.familyInfo = req.body.familyInfo;
+      family.extraInfo = req.body.familyInfo;
     }
 
     // Add new user IDs to existing family members
