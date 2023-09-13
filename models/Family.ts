@@ -6,8 +6,9 @@ export interface IFamily extends Document {
   numberOfMembers: number;
   passwordText: string;
   notifications: string[]; // Notification IDs
-  familyInfo: string;
   isAdmin: boolean;
+  extraInfo: string;
+  area: string;
 }
 
 const familySchema: Schema = new Schema({
@@ -18,7 +19,8 @@ const familySchema: Schema = new Schema({
   notifications: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Notification" },
   ],
-  familyInfo: { type: String },
+  extraInfo: { type: String },
+  area: { type: String },
   isAdmin: { type: Boolean, required: true },
 });
 
