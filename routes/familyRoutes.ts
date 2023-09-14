@@ -19,7 +19,7 @@ import authenticateFamily from "../middleware/authenticateFamily";
 const familyRouter = Router();
 
 //? GET's(READ)
-familyRouter.get("/getAllFamilies", authenticateFamily, getAllFamilies);
+familyRouter.get("/getAllFamilies", getAllFamilies);
 familyRouter.get("/getFamilyById/:familyId", getFamilyById);
 familyRouter.get(
   "/getAllFamilyMembers/:familyId",

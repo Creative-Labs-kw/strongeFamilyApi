@@ -75,19 +75,8 @@ export const createFamily = async (req: Request, res: Response) => {
       numberOfMembers: updatedFamilyMembers.length,
       notifications: [],
     });
-    console.log("familyName:", familyName);
 
-    console.log("passwordText:", passwordText);
-    console.log("extraInfo:", extraInfo);
-    console.log("isAdmin:", isAdmin);
-    console.log("familyMembers:", familyMembers);
-    console.log("creatorUserId:", creatorUserId);
-    // Generate a token for the creator user
-    const token = jwt.sign({ familyId: family._id }, secretKey, {
-      expiresIn: "10h",
-    });
-
-    res.json({ token, family });
+    res.json({ family });
   } catch (err) {
     console.error(err.message);
     return res.status(500).send("Server error");

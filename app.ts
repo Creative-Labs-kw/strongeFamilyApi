@@ -11,8 +11,8 @@ import connectToDatabase from "./utils/mongoose";
 import dotenv from "dotenv";
 
 dotenv.config();
-const isTestEnvironment = process.env.NODE_ENV === "test";
-export const port = isTestEnvironment ? 3001 : 3000;
+
+export const port = process.env.PORT;
 
 const cors = require("cors");
 export const app = express();
