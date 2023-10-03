@@ -17,10 +17,10 @@ const storeSchema: Schema = new Schema({
   owner: { type: String, required: true },
   description: { type: String, required: true },
   phoneNumber: { type: String, required: true },
-  imageUrl: { type: String, required: true },
-  instagramLink: { type: String, required: true },
-  snapChatLink: { type: String, required: true },
-  webLink: { type: String, required: true },
+  imageUrl: { type: String, required: false },
+  instagramLink: { type: String, required: false },
+  snapChatLink: { type: String, required: false },
+  webLink: { type: String, required: false },
   items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
 });
 
