@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import Family from "../models/Family";
-import jwt from "jsonwebtoken";
 
 //$ Get/Fetch all families
 export const getAllFamilies = async (
@@ -9,6 +8,7 @@ export const getAllFamilies = async (
 ): Promise<void> => {
   try {
     const families = await Family.find();
+
     res.json(families);
   } catch (err) {
     console.error(err.message);

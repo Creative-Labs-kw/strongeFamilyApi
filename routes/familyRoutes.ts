@@ -14,16 +14,16 @@ import {
   getFamilyPassword,
   updateFamilyPassword,
 } from "../controllers/familyPasswordController";
-import authenticateFamily from "../middleware/authenticateFamily";
+import authMiddleware from "../middleware/authMiddleware";
 
 const familyRouter = Router();
 
 //? GET's(READ)
-familyRouter.get("/getAllFamilies", getAllFamilies);
+familyRouter.get("/getAllFamilies", authMiddleware, getAllFamilies);
 familyRouter.get("/getFamilyById/:familyId", getFamilyById);
 familyRouter.get(
   "/getAllFamilyMembers/:familyId",
-  authenticateFamily,
+  authMiddleware,
   getAllFamilyMembers
 );
 //? POST(CREATE)
@@ -31,44 +31,40 @@ familyRouter.post("/createFamily", createFamily);
 //? PUT(UPDATE)
 familyRouter.put(
   "/updateFamilyById/:familyId",
-  authenticateFamily,
+  authMiddleware,
   updateFamilyById
 );
 //? DELETE
 familyRouter.delete(
   "/deleteFamilyById/:familyId",
-  authenticateFamily,
+  authMiddleware,
   deleteFamilyById
 );
-familyRouter.delete(
-  "/deleteAllFamilies",
-  authenticateFamily,
-  deleteAllFamilies
-);
+familyRouter.delete("/deleteAllFamilies", authMiddleware, deleteAllFamilies);
 
 // * FAMILY PASSWORD's:
 //? GET's(READ)
 familyRouter.get(
   "/getFamilyPassword/:familyId",
-  authenticateFamily,
+  authMiddleware,
   getFamilyPassword
 );
 //? POST(CREATE)
 familyRouter.post(
   "/createPassword/:familyId",
-  authenticateFamily,
+  authMiddleware,
   createFamilyPassword
 );
 //? PUT(UPDATE)
 familyRouter.put(
   "/updateFamilyPassword/:familyId",
-  authenticateFamily,
+  authMiddleware,
   updateFamilyPassword
 );
 //? DELETE
 familyRouter.delete(
   "/deleteFamilyPasswordById/:familyId",
-  authenticateFamily,
+  authMiddleware,
   deleteFamilyPasswordById
 );
 

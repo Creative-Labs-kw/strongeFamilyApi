@@ -9,6 +9,7 @@ export interface IFamily extends Document {
   isAdmin: boolean;
   extraInfo: string;
   area: string;
+  imageUrl: String;
 }
 
 const familySchema: Schema = new Schema({
@@ -22,6 +23,7 @@ const familySchema: Schema = new Schema({
   extraInfo: { type: String },
   area: { type: String },
   isAdmin: { type: Boolean, required: true },
+  imageUrl: { type: String },
 });
 
 export default mongoose.model<IFamily>("Family", familySchema);
