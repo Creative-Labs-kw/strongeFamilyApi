@@ -149,7 +149,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Create and send JWT token using environment variables
     // Using email as the payload for this example
     const token = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRATION,
+      expiresIn: process.env.JWT_EXPIRATION_1_WEEK,
     });
 
     res.json({ token }); // Only sending the token back
@@ -177,7 +177,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const jwtExpirationInSeconds = parseInt(process.env.JWT_EXPIRATION, 10);
+    const jwtExpirationInSeconds = parseInt(process.env.JWT_EXPIRATION_1_WEEK, 10);
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: jwtExpirationInSeconds,
